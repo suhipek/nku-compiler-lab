@@ -118,5 +118,40 @@ void FunctionDef::output(int level)
     type = se->getType()->toStr();
     fprintf(yyout, "%*cFunctionDefine function name: %s, type: %s\n", level, ' ', 
             name.c_str(), type.c_str());
+    params->output(level + 4);
     stmt->output(level + 4);
+}
+
+void CallExpr::output(int level)
+{
+    std::string name, type;
+    name = symbolEntry->toStr();
+    type = symbolEntry->getType()->toStr();
+    fprintf(yyout, "%*cCallExpr function name: %s, type: %s\n", level, ' ', 
+            name.c_str(), type.c_str());
+    params->output(level + 4);
+}
+
+void CallParams::append(ExprNode* expr)
+{
+    params.push_back(expr);
+}
+
+void CallParams::output(int level)
+{
+    fprintf(yyout, "%*cCallParams params_n: %d\n", level, ' ', (int)params.size());
+    for(auto it: params)
+        it->output(level + 4);
+}
+
+void FuncParams::append(Id * id)
+{
+    params.push_back(id);
+}
+
+void FuncParams::output(int level)
+{
+    fprintf(yyout, "%*cFuncParams params_n: %d\n", level, ' ', (int)params.size());
+    for(auto it: params)
+        it->output(level + 4);
 }

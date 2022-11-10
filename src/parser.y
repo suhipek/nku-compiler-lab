@@ -19,6 +19,9 @@
     StmtNode* stmttype;
     ExprNode* exprtype;
     Type* type;
+    CallParams* callparamstype;
+    FuncParams* funcparamstype;
+    Node* nodetype;
 }
 
 %start Program
@@ -26,12 +29,16 @@
 %token <itype> INTEGER
 %token IF ELSE
 %token INT VOID
+%token CONST
+%token COMMA
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON
 %token ADD SUB OR AND LESS ASSIGN
 %token RETURN
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef
-%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp
+%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp//62idList
+%nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
+%nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
 %nterm <type> Type
 
 %precedence THEN
@@ -118,6 +125,36 @@ PrimaryExp
         SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, $1);
         $$ = new Constant(se);
     }
+    | CallExp {
+        $$ = $1;
+    }
+    ;
+CallExp
+    :
+    ID LPAREN CallParam RPAREN {
+        SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if(se == nullptr)
+        {
+            fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+            delete [](char*)$1;
+            assert(se != nullptr);
+        }
+        $$ = new CallExpr(se, $3);
+        delete []$1;
+    }
+    ;
+CallParam
+    :
+    %empty {$$ = new CallParams();} // no parameters
+    |
+    Exp {
+        $$ = new CallParams();
+        $$->append($1);
+    }
+    | CallParam COMMA Exp {
+        $$->append($3);
+    }
     ;
 AddExp
     :
@@ -182,7 +219,30 @@ DeclStmt
         $$ = new DeclStmt(new Id(se));
         delete []$2;
     }
+    /* |
+    CONST Type ID SEMICOLON {
+        SymbolEntry *se;
+        se = new ConstantSymbolEntry($2, 0);
+        identifiers->install($3, se);
+        $$ = new DeclStmt(new Id(se));
+        delete []$3;
+    } */
+    /* Type idList{}
+    |
+    CONST Type idList{} */
     ;
+/* idList
+    :
+    ID {
+
+    }
+    |
+    ID ASSIGN Exp{}
+    |
+    idList COMMA ID{}
+    |
+    idList COMMA ID ASSIGN Exp{}
+    ; */
 FuncDef
     :
     Type ID {
@@ -192,17 +252,39 @@ FuncDef
         identifiers->install($2, se);
         identifiers = new SymbolTable(identifiers);
     }
-    LPAREN RPAREN
+    LPAREN FuncParam RPAREN
     BlockStmt
     {
         SymbolEntry *se;
         se = identifiers->lookup($2);
         assert(se != nullptr);
-        $$ = new FunctionDef(se, $6);
+        $$ = new FunctionDef(se, $5, $7);
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
         delete top;
         delete []$2;
+    }
+    ;
+FuncParam
+    :
+    %empty {$$ = new FuncParams();} // no parameters
+    |
+    Type ID {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel() + 1); 
+        // 函数参数表中定义的符号属于函数体，故level+1 ^ 
+        identifiers->install($2, se);
+        $$ = new FuncParams();
+        $$->append(new Id(se));
+        delete []$2;
+    }
+    |
+    FuncParam COMMA Type ID {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry($3, $4, identifiers->getLevel() + 1);
+        identifiers->install($4, se);
+        $$->append(new Id(se));
+        // delete []$3;
     }
     ;
 %%

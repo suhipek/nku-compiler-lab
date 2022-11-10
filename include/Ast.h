@@ -2,6 +2,7 @@
 #define __AST_H__
 
 #include <fstream>
+#include <vector>
 
 class SymbolEntry;
 
@@ -119,13 +120,43 @@ public:
     void output(int level);
 };
 
+class FuncParams : public Node
+{
+private:
+    std::vector<Id*> params;
+public:
+    FuncParams(){}
+    void append(Id*);
+    void output(int level);
+};
+
 class FunctionDef : public StmtNode
 {
 private:
     SymbolEntry *se;
+    FuncParams *params;
     StmtNode *stmt;
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : se(se), params(params), stmt(stmt){};
+    void output(int level);
+};
+
+class CallParams : public Node
+{
+protected:
+    std::vector<ExprNode*> params;
+public:
+    CallParams(){}
+    void append(ExprNode* expr);
+    void output(int level);
+};
+
+class CallExpr : public ExprNode
+{
+protected:
+    CallParams* params; // argument list
+public:
+    CallExpr(SymbolEntry *se, CallParams* params) : ExprNode(se), params(params){};
     void output(int level);
 };
 

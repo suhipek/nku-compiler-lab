@@ -4,6 +4,8 @@
     #define YY_NO_INPUT
 
     #include "parser.h"
+    #include <sstream>
+    #include <iomanip>
     #include <ostream>
     #include <fstream>
     using namespace std;
@@ -22,7 +24,13 @@ DECIMIAL ([1-9][0-9]*|0)
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 EOL (\r\n|\n|\r)
 WHITE [\t ]
+commentbegin "/*"
+commentend "*/"
+commentline "//"
+commentelement [^\n]
+
 %x BLOCKCOMMENT
+%x LINECOMMENT
 
 %%
 
@@ -35,6 +43,11 @@ WHITE [\t ]
     if(dump_tokens)
         DEBUG_FOR_LAB4("INT\tint");
     return INT;
+}
+"const" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("CONST\tconst");
+    return CONST;
 }
 "void" {
     if(dump_tokens)
@@ -97,7 +110,11 @@ WHITE [\t ]
         DEBUG_FOR_LAB4("RBRACE\t}");
     return RBRACE;
 }
-
+"," {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("COMMA\t,");
+    return COMMA;
+}
 {DECIMIAL} {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);
@@ -114,6 +131,28 @@ WHITE [\t ]
     yylval.strtype = lexeme;
     return ID;
 }
+{commentbegin} {
+    BEGIN BLOCKCOMMENT;
+}
+<BLOCKCOMMENT>{commentelement} {
+}
+<BLOCKCOMMENT>{EOL} {
+    yylineno++;
+}
+<BLOCKCOMMENT>{commentend} {
+    BEGIN INITIAL;
+}
+
+{commentline} {
+    BEGIN LINECOMMENT;
+}
+<LINECOMMENT>{commentelement} {
+}
+<LINECOMMENT>{EOL} {
+    yylineno++;
+    BEGIN INITIAL;
+}
+
 {EOL} yylineno++;
 {WHITE}
 %%
