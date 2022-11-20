@@ -246,18 +246,20 @@ DeclStmt
 FuncDef
     :
     Type ID 
+    {
+        
+        identifiers = new SymbolTable(identifiers);
+    }
     LPAREN FuncParam RPAREN
     BlockStmt
     {
         Type *funcType;
-        // getting types of parameters
-        //std::vector<Type*> paramsType = $4->getParamsType();
-        funcType = new FunctionType($1, $4->getTypes());
+        funcType = new FunctionType($1, $5->getTypes());
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        identifiers->install($2, se);
-        identifiers = new SymbolTable(identifiers);
+        globals->install($2, se);
+        
 
-        $$ = new FunctionDef(se, $4, $6);
+        $$ = new FunctionDef(se, $5, $7);
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
         delete top;
