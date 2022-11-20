@@ -245,20 +245,19 @@ DeclStmt
     ; */
 FuncDef
     :
-    Type ID {
-        Type *funcType;
-        funcType = new FunctionType($1,{});
-        SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        identifiers->install($2, se);
-        identifiers = new SymbolTable(identifiers);
-    }
+    Type ID 
     LPAREN FuncParam RPAREN
     BlockStmt
     {
-        SymbolEntry *se;
-        se = identifiers->lookup($2);
-        assert(se != nullptr);
-        $$ = new FunctionDef(se, $5, $7);
+        Type *funcType;
+        // getting types of parameters
+        //std::vector<Type*> paramsType = $4->getParamsType();
+        funcType = new FunctionType($1, $4->getTypes());
+        SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
+        identifiers->install($2, se);
+        identifiers = new SymbolTable(identifiers);
+
+        $$ = new FunctionDef(se, $4, $6);
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
         delete top;
@@ -271,20 +270,21 @@ FuncParam
     |
     Type ID {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel() + 1); 
-        // 函数参数表中定义的符号属于函数体，故level+1 ^ 
+        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
         identifiers->install($2, se);
+        DeclStmt* decl = new DeclStmt(new Id(se));
         $$ = new FuncParams();
-        $$->append(new Id(se));
+        $$->append($1, decl);
         delete []$2;
     }
     |
     FuncParam COMMA Type ID {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry($3, $4, identifiers->getLevel() + 1);
+        se = new IdentifierSymbolEntry($3, $4, identifiers->getLevel());
         identifiers->install($4, se);
-        $$->append(new Id(se));
-        // delete []$3;
+        DeclStmt* decl = new DeclStmt(new Id(se));
+        $$->append($3, decl);
+        delete []$4;
     }
     ;
 %%

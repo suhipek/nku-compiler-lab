@@ -60,8 +60,8 @@ void Id::output(int level)
     name = symbolEntry->toStr();
     type = symbolEntry->getType()->toStr();
     scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\n", level, ' ',
-            name.c_str(), scope, type.c_str());
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_to_entry: %p\n", level, ' ',
+            name.c_str(), scope, type.c_str(), symbolEntry);
 }
 
 void CompoundStmt::output(int level)
@@ -72,9 +72,9 @@ void CompoundStmt::output(int level)
 
 void SeqNode::output(int level)
 {
-    fprintf(yyout, "%*cSequence\n", level, ' ');
-    stmt1->output(level + 4);
-    stmt2->output(level + 4);
+    // fprintf(yyout, "%*cSequence\n", level, ' ');
+    stmt1->output(level);
+    stmt2->output(level);
 }
 
 void DeclStmt::output(int level)
@@ -144,14 +144,15 @@ void CallParams::output(int level)
         it->output(level + 4);
 }
 
-void FuncParams::append(Id * id)
+void FuncParams::append(Type* type, DeclStmt* decl)
 {
-    params.push_back(id);
+    types.push_back(type);
+    decls.push_back(decl);
 }
 
 void FuncParams::output(int level)
 {
-    fprintf(yyout, "%*cFuncParams params_n: %d\n", level, ' ', (int)params.size());
-    for(auto it: params)
+    fprintf(yyout, "%*cFuncParams params_n: %d\n", level, ' ', (int)decls.size());
+    for(auto it: decls)
         it->output(level + 4);
 }

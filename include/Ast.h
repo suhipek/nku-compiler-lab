@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <vector>
+#include "Type.h"
 
 class SymbolEntry;
 
@@ -123,10 +124,12 @@ public:
 class FuncParams : public Node
 {
 private:
-    std::vector<Id*> params;
+    std::vector<Type *> types;
+    std::vector<DeclStmt*> decls;
 public:
     FuncParams(){}
-    void append(Id*);
+    void append(Type*, DeclStmt*);
+    std::vector<Type *> getTypes() const {return types;};
     void output(int level);
 };
 

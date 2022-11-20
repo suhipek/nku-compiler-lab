@@ -20,6 +20,14 @@ std::string VoidType::toStr()
 std::string FunctionType::toStr()
 {
     std::ostringstream buffer;
-    buffer << returnType->toStr() << "()";
+    buffer << returnType->toStr() << "(";
+    // for(auto it: paramsType) 为啥auto会被推倒成Type*
+    for(auto it = paramsType.begin(); it != paramsType.end(); ++it)
+    {
+        buffer << (*it)->toStr();
+        if(it != paramsType.end() - 1)
+            buffer << ", ";
+    }
+    buffer << ")";
     return buffer.str();
 }

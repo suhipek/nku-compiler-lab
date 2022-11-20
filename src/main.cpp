@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: fail to open output file\n", outfile);
         exit(EXIT_FAILURE);
     }
+    fprintf(stdout, "Processing %s \n", argv[optind]);
     yyparse();
     if(dump_ast)
         ast.output();
