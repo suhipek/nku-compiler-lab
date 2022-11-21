@@ -5,6 +5,7 @@
     extern Ast ast;
     int yylex();
     int yyerror( char const * );
+    Type* nowType; // “最近”的类型，用于声明变量
 }
 
 %code requires {
@@ -36,6 +37,7 @@
 %token RETURN
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef
+%nterm <stmttype> VarList ConstList VarDef ConstDef
 %nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp//62idList
 %nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
 %nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
@@ -204,45 +206,89 @@ LOrExp
     ;
 Type
     : INT {
+        nowType = TypeSystem::intType;
         $$ = TypeSystem::intType;
     }
     | VOID {
         $$ = TypeSystem::voidType;
     }
     ;
+
+
+
 DeclStmt
     :
-    Type ID SEMICOLON {
-        SymbolEntry *se;
-        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
-        identifiers->install($2, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$2;
+    Type VarList SEMICOLON {
+        $$ = $2;
     }
-    /* |
-    CONST Type ID SEMICOLON {
-        SymbolEntry *se;
-        se = new ConstantSymbolEntry($2, 0);
-        identifiers->install($3, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$3;
-    } */
-    /* Type idList{}
     |
-    CONST Type idList{} */
+    CONST Type ConstList SEMICOLON {
+        $$ = $3;
+    }
     ;
-/* idList
+VarList
     :
-    ID {
-
+    VarDef {
+        $$ = $1;
     }
     |
-    ID ASSIGN Exp{}
+    VarList COMMA VarDef {
+        $$ = new SeqNode($1, $3);
+    }
+    ;
+ConstList
+    :
+    ConstDef {
+        $$ = $1;
+    }
     |
-    idList COMMA ID{}
+    ConstList COMMA ConstDef {
+        $$ = new SeqNode($1, $3);
+    }
+    ;
+VarDef
+    :
+    ID
+    {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se));
+        delete []$1;
+    }
     |
-    idList COMMA ID ASSIGN Exp{}
-    ; */
+    ID ASSIGN Exp
+    {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se), $3);
+        delete []$1;
+    }
+    ;
+ConstDef
+    :
+    ID
+    {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se));
+        delete []$1;
+    }
+    |
+    ID ASSIGN Exp
+    {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se), $3);
+        delete []$1;
+    }
+    ;
+
+
+
 FuncDef
     :
     Type ID 
@@ -254,9 +300,9 @@ FuncDef
     BlockStmt
     {
         Type *funcType;
-        funcType = new FunctionType($1, $5->getTypes());
+        funcType = new FunctionType($1, $5->getTypes()); // FunctionType(Type* returnType, std::vector<Type*> paramsType)
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        globals->install($2, se);
+        globals->install($2, se); // 函数定义时，将函数名加入全局符号表
         
 
         $$ = new FunctionDef(se, $5, $7);

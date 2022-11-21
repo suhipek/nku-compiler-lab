@@ -7,15 +7,17 @@ class Type
 {
 private:
     int kind;
+    bool isConstType;
 protected:
     enum {INT, VOID, FUNC};
 public:
-    Type(int kind) : kind(kind) {};
+    Type(int kind, bool _isConst = false) : kind(kind), isConstType(_isConst) {};
     virtual ~Type() {};
     virtual std::string toStr() = 0;
     bool isInt() const {return kind == INT;};
     bool isVoid() const {return kind == VOID;};
     bool isFunc() const {return kind == FUNC;};
+    bool isConst() const {return isConstType;};
 };
 
 class IntType : public Type
@@ -23,7 +25,7 @@ class IntType : public Type
 private:
     int size;
 public:
-    IntType(int size) : Type(Type::INT), size(size){};
+    IntType(int size, bool isConst = false) : Type(Type::INT, isConst), size(size){};
     std::string toStr();
 };
 
@@ -50,9 +52,12 @@ class TypeSystem
 private:
     static IntType commonInt;
     static VoidType commonVoid;
+    static IntType commonConstInt;
 public:
     static Type *intType;
     static Type *voidType;
+    static Type *constIntType;
+    static Type *getConstTypeOf(Type *type);
 };
 
 #endif
