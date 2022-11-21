@@ -28,12 +28,13 @@
 %start Program
 %token <strtype> ID 
 %token <itype> INTEGER
-%token IF ELSE
+%token IF ELSE WHILE FOR
+%token HEX OCT
 %token INT VOID
 %token CONST
 %token COMMA
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON
-%token ADD SUB OR AND LESS ASSIGN
+%token ADD SUB OR AND LESS ASSIGN STAR EQUAL
 %token RETURN
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef
@@ -251,7 +252,7 @@ VarDef
     ID
     {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se));
         delete []$1;
@@ -260,7 +261,7 @@ VarDef
     ID ASSIGN Exp
     {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se), $3);
         delete []$1;
@@ -271,7 +272,7 @@ ConstDef
     ID
     {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se));
         delete []$1;
@@ -280,7 +281,7 @@ ConstDef
     ID ASSIGN Exp
     {
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se), $3);
         delete []$1;

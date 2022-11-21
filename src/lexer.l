@@ -2,6 +2,7 @@
 %{
     #define YY_NO_UNPUT
     #define YY_NO_INPUT
+    #include <string>
 
     #include "parser.h"
     #include <sstream>
@@ -21,6 +22,8 @@
 %}
 
 DECIMIAL ([1-9][0-9]*|0)
+HEX (0[xX][0-9a-fA-F]+)
+OCT (0[0-7]+)
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 EOL (\r\n|\n|\r)
 WHITE [\t ]
@@ -54,6 +57,16 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("VOID\tvoid");
     return VOID;
 }
+"while" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("WHILE\twhile");
+        return WHILE;
+}
+"for" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("FOR\tfor");
+        return FOR;
+}
 "if" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("IF\tif");
@@ -85,6 +98,23 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("ADD\t+");
     return ADD;
 }
+"-" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("SUB\t-");
+        return SUB;
+}
+"*" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("STAR\t*");
+        return STAR;
+}
+
+"==" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("EQUAL\t==");
+        return EQUAL;
+}
+
 ";" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("SEMICOLON\t;");
