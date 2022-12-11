@@ -13,9 +13,15 @@ int yyparse();
 char outfile[256] = "a.out";
 bool dump_tokens;
 bool dump_ast;
+extern int yylineno;
 
 int main(int argc, char *argv[])
 {
+    dump_tokens = dump_ast = false;
+    yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
+    yyparse();
+    fclose(yyin);
+    yylineno = 0; // 重置行号
     int opt;
     while ((opt = getopt(argc, argv, "ato:")) != -1)
     {

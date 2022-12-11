@@ -21,6 +21,7 @@ void Ast::output()
 void BinaryExpr::output(int level)
 {
     std::string op_str;
+    // ADD, SUB, AND, MUL, DIV, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ, LE, GE
     switch(op)
     {
         case ADD:
@@ -28,6 +29,12 @@ void BinaryExpr::output(int level)
             break;
         case SUB:
             op_str = "sub";
+            break;
+        case MUL:
+            op_str = "mul";
+            break;
+        case DIV:
+            op_str = "div";
             break;
         case AND:
             op_str = "and";
@@ -37,6 +44,21 @@ void BinaryExpr::output(int level)
             break;
         case LESS:
             op_str = "less";
+            break;
+        case GREATER:
+            op_str = "greater";
+            break;
+        case EQ:
+            op_str = "equal";
+            break;
+        case NEQ:
+            op_str = "not_equal";
+            break;
+        case LEQ:
+            op_str = "less_equal";
+            break;
+        case GEQ:
+            op_str = "greater_equal";
             break;
     }
     fprintf(yyout, "%*cBinaryExpr\top: %s\n", level, ' ', op_str.c_str());
@@ -67,7 +89,8 @@ void Id::output(int level)
 void CompoundStmt::output(int level)
 {
     fprintf(yyout, "%*cCompoundStmt\n", level, ' ');
-    stmt->output(level + 4);
+    if(stmt != nullptr)
+        stmt->output(level + 4);
 }
 
 void SeqNode::output(int level)
@@ -92,6 +115,13 @@ void IfStmt::output(int level)
     thenStmt->output(level + 4);
 }
 
+void WhileStmt::output(int level)
+{
+    fprintf(yyout, "%*cWhileStmt\n", level, ' ');
+    cond->output(level + 4);
+    body->output(level + 4);
+}
+
 void IfElseStmt::output(int level)
 {
     fprintf(yyout, "%*cIfElseStmt\n", level, ' ');
@@ -109,7 +139,8 @@ void ReturnStmt::output(int level)
 void AssignStmt::output(int level)
 {
     fprintf(yyout, "%*cAssignStmt\n", level, ' ');
-    lval->output(level + 4);
+    if(lval!=nullptr)
+        lval->output(level + 4);
     expr->output(level + 4);
 }
 
@@ -121,7 +152,8 @@ void FunctionDef::output(int level)
     fprintf(yyout, "%*cFunctionDefine function name: %s, type: %s\n", level, ' ', 
             name.c_str(), type.c_str());
     params->output(level + 4);
-    stmt->output(level + 4);
+    if(stmt!=nullptr)
+        stmt->output(level + 4);
 }
 
 void CallExpr::output(int level)

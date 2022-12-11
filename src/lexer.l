@@ -93,6 +93,33 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("LESS\t<");
     return LESS;
 }
+">" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("GREATER\t>");
+    return GREATER;
+}
+"==" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("EQ\t==");
+        return EQ;
+}
+"!=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("NEQ\t!=");
+        return NEQ;
+}
+"<=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("LEQ\t<=");
+        return LEQ;
+}
+">=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("GEQ\t>=");
+        return GEQ;
+}
+
+
 "+" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("ADD\t+");
@@ -108,11 +135,10 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("STAR\t*");
         return STAR;
 }
-
-"==" {
+"/" {
     if(dump_tokens)
-        DEBUG_FOR_LAB4("EQUAL\t==");
-        return EQUAL;
+        DEBUG_FOR_LAB4("DIV\t/");
+        return DIV;
 }
 
 ";" {

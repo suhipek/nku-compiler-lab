@@ -5,6 +5,7 @@
     extern Ast ast;
     int yylex();
     int yyerror( char const * );
+    int yyget_lineno(void);
     Type* nowType; // “最近”的类型，用于声明变量
 }
 
@@ -34,12 +35,14 @@
 %token CONST
 %token COMMA
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON
-%token ADD SUB OR AND LESS ASSIGN STAR EQUAL
+%token ADD SUB OR AND STAR DIV 
+%token LESS GREATER EQ NEQ LEQ GEQ LE GE
+%token ASSIGN
 %token RETURN
 
-%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef
+%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef WhileStmt
 %nterm <stmttype> VarList ConstList VarDef ConstDef
-%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp//62idList
+%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp MulExp
 %nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
 %nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
 %nterm <type> Type
@@ -65,6 +68,7 @@ Stmt
     | ReturnStmt {$$=$1;}
     | DeclStmt {$$=$1;}
     | FuncDef {$$=$1;}
+    | WhileStmt {$$=$1;}
     ;
 LVal
     : ID {
@@ -85,6 +89,10 @@ AssignStmt
     LVal ASSIGN Exp SEMICOLON {
         $$ = new AssignStmt($1, $3);
     }
+    |
+    CallExp SEMICOLON {
+        $$ = new AssignStmt(nullptr, $1);
+    }
     ;
 BlockStmt
     :   LBRACE 
@@ -96,6 +104,11 @@ BlockStmt
             identifiers = identifiers->getPrev();
             delete top;
         }
+        |
+        SEMICOLON
+        {
+            $$ = new CompoundStmt(nullptr);
+        }
     ;
 IfStmt
     : IF LPAREN Cond RPAREN Stmt %prec THEN {
@@ -103,6 +116,11 @@ IfStmt
     }
     | IF LPAREN Cond RPAREN Stmt ELSE Stmt {
         $$ = new IfElseStmt($3, $5, $7);
+    }
+    ;
+WhileStmt
+    : WHILE LPAREN Cond RPAREN Stmt {
+        $$ = new WhileStmt($3, $5);
     }
     ;
 ReturnStmt
@@ -159,22 +177,39 @@ CallParam
         $$->append($3);
     }
     ;
-AddExp
+MulExp
     :
     PrimaryExp {$$ = $1;}
     |
-    AddExp ADD PrimaryExp
+    MulExp STAR PrimaryExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::MUL, $1, $3);
+    }
+    |
+    MulExp DIV PrimaryExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::DIV, $1, $3);
+    }
+    ;
+AddExp
+    :
+    MulExp {$$ = $1;}
+    |
+    AddExp ADD MulExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::ADD, $1, $3);
     }
     |
-    AddExp SUB PrimaryExp
+    AddExp SUB MulExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::SUB, $1, $3);
     }
     ;
+// LESS, GREATER, EQ, NEQ, LEQ, GEQ, LE, GE
 RelExp
     :
     AddExp {$$ = $1;}
@@ -183,6 +218,36 @@ RelExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::LESS, $1, $3);
+    }
+    |
+    RelExp GREATER AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::GREATER, $1, $3);
+    }
+    |
+    RelExp EQ AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::EQ, $1, $3);
+    }
+    |
+    RelExp NEQ AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::NEQ, $1, $3);
+    }
+    |
+    RelExp LEQ AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::LEQ, $1, $3);
+    }
+    |
+    RelExp GEQ AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::GEQ, $1, $3);
     }
     ;
 LAndExp
@@ -298,7 +363,7 @@ FuncDef
         identifiers = new SymbolTable(identifiers);
     }
     LPAREN FuncParam RPAREN
-    BlockStmt
+    Stmt
     {
         Type *funcType;
         funcType = new FunctionType($1, $5->getTypes()); // FunctionType(Type* returnType, std::vector<Type*> paramsType)
@@ -340,6 +405,6 @@ FuncParam
 
 int yyerror(char const* message)
 {
-    std::cerr<<message<<std::endl;
+    std::cerr<<message<<"at line "<<yyget_lineno()<<std::endl;
     return -1;
 }

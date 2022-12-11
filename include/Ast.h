@@ -32,7 +32,7 @@ private:
     int op;
     ExprNode *expr1, *expr2;
 public:
-    enum {ADD, SUB, AND, OR, LESS};
+    enum {ADD, SUB, AND, MUL, DIV, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ};
     BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){};
     void output(int level);
 };
@@ -104,6 +104,16 @@ public:
     void output(int level);
 };
 
+class WhileStmt : public StmtNode
+{
+private:
+    ExprNode *cond;
+    StmtNode *body;
+public:
+    WhileStmt(ExprNode *cond, StmtNode *body) : cond(cond), body(body){};
+    void output(int level);
+};
+
 class ReturnStmt : public StmtNode
 {
 private:
@@ -143,6 +153,7 @@ private:
     StmtNode *stmt;
 public:
     FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : se(se), params(params), stmt(stmt){};
+    void setStmt(StmtNode *stmt){this->stmt = stmt;} // for function prototype
     void output(int level);
 };
 
