@@ -171,9 +171,26 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("COMMA\t,");
     return COMMA;
 }
+
+{HEX} {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("HEX");
+    stringstream conv;
+    conv << hex << yytext;
+    conv >> yylval.itype;
+    return INTEGER;
+}
+{OCT} {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("OCT");
+    stringstream conv;
+    conv << oct << yytext;
+    conv >> yylval.itype;
+    return INTEGER;
+}
 {DECIMIAL} {
     if(dump_tokens)
-        DEBUG_FOR_LAB4(yytext);
+        DEBUG_FOR_LAB4("DEC");
     yylval.itype = atoi(yytext);
     return INTEGER;
 }
