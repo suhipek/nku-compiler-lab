@@ -433,7 +433,8 @@ void IfElseStmt::output(int level)
 void ReturnStmt::output(int level)
 {
     fprintf(yyout, "%*cReturnStmt\n", level, ' ');
-    retValue->output(level + 4);
+    if(retValue != nullptr)
+        retValue->output(level + 4);
 }
 
 void AssignStmt::output(int level)

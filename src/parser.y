@@ -77,7 +77,7 @@ LVal
         se = identifiers->lookup($1);
         if(se == nullptr)
         {
-            fprintf(stderr, "identifier \"%s\" is undefined\n", (char*)$1);
+            fprintf(stderr, "\033[31m Line %d: identifier \"%s\" is undefined\033[39m\n", yyget_lineno(), (char*)$1);
             delete [](char*)$1;
             assert(se != nullptr);
         }
@@ -130,6 +130,10 @@ ReturnStmt
     RETURN Exp SEMICOLON{
         $$ = new ReturnStmt($2);
     }
+    |
+    RETURN SEMICOLON{
+        $$ = new ReturnStmt(nullptr);
+    }
     ;
 ExprStmt
     :
@@ -179,7 +183,7 @@ CallExp
         se = identifiers->lookup($1);
         if(se == nullptr)
         {
-            fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+            fprintf(stderr, "\033[31mLine %d: function \"%s\" is undefined\033[39m\n", yyget_lineno(), (char*)$1);
             delete [](char*)$1;
             assert(se != nullptr);
         }
@@ -345,6 +349,13 @@ VarDef
     ID
     {
         SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if(identifiers->lookup($1) != nullptr)
+        {
+            fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
+            exit(1);
+        }
+
         se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se));
@@ -354,6 +365,13 @@ VarDef
     ID ASSIGN Exp
     {
         SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if(identifiers->lookup($1) != nullptr)
+        {
+            fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
+            exit(1);
+        }
+
         se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se), $3);
@@ -365,6 +383,13 @@ ConstDef
     ID
     {
         SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if(identifiers->lookup($1) != nullptr)
+        {
+            fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
+            exit(1);
+        }
+
         se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se));
@@ -374,6 +399,13 @@ ConstDef
     ID ASSIGN Exp
     {
         SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if(identifiers->lookup($1) != nullptr)
+        {
+            fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
+            exit(1);
+        }
+
         se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se), $3);
