@@ -35,13 +35,13 @@
 %token CONST
 %token COMMA
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON
-%token ADD SUB OR AND STAR DIV 
-%token LESS GREATER EQ NEQ LEQ GEQ LE GE
+%token ADD SUB OR AND STAR DIV MOD
+%token LESS GREATER EQ NEQ LEQ GEQ NOT
 %token ASSIGN
 %token RETURN
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef WhileStmt
-%nterm <stmttype> VarList ConstList VarDef ConstDef
+%nterm <stmttype> VarList ConstList VarDef ConstDef ExprStmt
 %nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp MulExp
 %nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
 %nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
@@ -69,6 +69,7 @@ Stmt
     | DeclStmt {$$=$1;}
     | FuncDef {$$=$1;}
     | WhileStmt {$$=$1;}
+    | ExprStmt {$$=$1;}
     ;
 LVal
     : ID {
@@ -89,10 +90,6 @@ AssignStmt
     LVal ASSIGN Exp SEMICOLON {
         $$ = new AssignStmt($1, $3);
     }
-    |
-    CallExp SEMICOLON {
-        $$ = new AssignStmt(nullptr, $1);
-    }
     ;
 BlockStmt
     :   LBRACE 
@@ -103,6 +100,11 @@ BlockStmt
             SymbolTable *top = identifiers;
             identifiers = identifiers->getPrev();
             delete top;
+        }
+        |
+        LBRACE RBRACE
+        {
+            $$ = new CompoundStmt(nullptr);
         }
         |
         SEMICOLON
@@ -129,6 +131,12 @@ ReturnStmt
         $$ = new ReturnStmt($2);
     }
     ;
+ExprStmt
+    :
+    Exp SEMICOLON {
+        $$ = new ExprStmt($1);
+    }
+    ;
 Exp
     :
     AddExp {$$ = $1;}
@@ -148,6 +156,20 @@ PrimaryExp
     }
     | CallExp {
         $$ = $1;
+    }
+    | LPAREN Exp RPAREN {
+        $$ = $2;
+    }
+    | SUB PrimaryExp {
+        SymbolEntry *se = new TemporarySymbolEntry(nowType, SymbolTable::getLabel());
+        $$ = new UnaryExpr(se, UnaryExpr::SUB, $2);
+    }
+    | ADD PrimaryExp {
+        $$ = $2;
+    }
+    | NOT PrimaryExp {
+        SymbolEntry *se = new TemporarySymbolEntry(nowType, SymbolTable::getLabel());
+        $$ = new UnaryExpr(se, UnaryExpr::NOT, $2);
     }
     ;
 CallExp
@@ -191,6 +213,12 @@ MulExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::DIV, $1, $3);
+    }
+    |
+    MulExp MOD PrimaryExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::MOD, $1, $3);
     }
     ;
 AddExp
@@ -405,6 +433,6 @@ FuncParam
 
 int yyerror(char const* message)
 {
-    std::cerr<<message<<"at line "<<yyget_lineno()<<std::endl;
+    std::cerr<<message<<" at line "<<yyget_lineno()<<std::endl;
     return -1;
 }

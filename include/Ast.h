@@ -32,8 +32,19 @@ private:
     int op;
     ExprNode *expr1, *expr2;
 public:
-    enum {ADD, SUB, AND, MUL, DIV, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ};
+    enum {ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ};
     BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){};
+    void output(int level);
+};
+
+class UnaryExpr : public ExprNode
+{
+private:
+    int op;
+    ExprNode *expr;
+public:
+    enum{NOT, SUB};
+    UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
     void output(int level);
 };
 
@@ -130,6 +141,15 @@ private:
     ExprNode *expr;
 public:
     AssignStmt(ExprNode *lval, ExprNode *expr) : lval(lval), expr(expr) {};
+    void output(int level);
+};
+
+class ExprStmt : public StmtNode
+{
+private:
+    ExprNode *expr;
+public:
+    ExprStmt(ExprNode *expr) : expr(expr) {};
     void output(int level);
 };
 

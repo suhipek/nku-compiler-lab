@@ -118,7 +118,16 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("GEQ\t>=");
         return GEQ;
 }
-
+"&&" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("AND\t&&");
+        return AND;
+}
+"||" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("OR\t||");
+        return OR;
+}
 
 "+" {
     if(dump_tokens)
@@ -140,6 +149,17 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("DIV\t/");
         return DIV;
 }
+"%" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("MOD\t%");
+        return MOD;
+}
+"!" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("NOT\t!");
+        return NOT;
+}
+
 
 ";" {
     if(dump_tokens)

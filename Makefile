@@ -1,7 +1,7 @@
 SRC_PATH ?= src
 INC_PATH += include
 BUILD_PATH ?= build
-TEST_PATH ?= test
+TEST_PATH ?= test/level1-2
 OBJ_PATH ?= $(BUILD_PATH)/obj
 BINARY ?= $(BUILD_PATH)/compiler
 SYSLIB_PATH ?= sysyruntimelibrary
@@ -59,7 +59,7 @@ $(TEST_PATH)/%.ast:$(TEST_PATH)/%.sy
 
 testlab4:app $(OUTPUT_LAB4)
 
-testlab5:app $(OUTPUT_LAB5)
+testlab5:clean app $(OUTPUT_LAB5)
 
 clean:
 	@rm -rf $(BUILD_PATH) $(PARSER) $(LEXER) $(PARSERH) $(OUTPUT_LAB4) $(OUTPUT_LAB5) ./example.ast

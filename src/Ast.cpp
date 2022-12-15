@@ -66,6 +66,22 @@ void BinaryExpr::output(int level)
     expr2->output(level + 4);
 }
 
+void UnaryExpr::output(int level)
+{
+    std::string op_str;
+    switch(op)
+    {
+        case NOT:
+            op_str = "not";
+            break;
+        case SUB:
+            op_str = "sub";
+            break;
+    }
+    fprintf(yyout, "%*cUnaryExpr\top: %s\n", level, ' ', op_str.c_str());
+    expr->output(level + 4);
+}
+
 void Constant::output(int level)
 {
     std::string type, value;
@@ -141,6 +157,12 @@ void AssignStmt::output(int level)
     fprintf(yyout, "%*cAssignStmt\n", level, ' ');
     if(lval!=nullptr)
         lval->output(level + 4);
+    expr->output(level + 4);
+}
+
+void ExprStmt::output(int level)
+{
+    fprintf(yyout, "%*cExprStmt\n", level, ' ');
     expr->output(level + 4);
 }
 

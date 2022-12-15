@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
     yyparse();
     fclose(yyin);
-    yylineno = 0; // 重置行号
+    yylineno = 1; // 重置行号
     int opt;
     while ((opt = getopt(argc, argv, "ato:")) != -1)
     {
