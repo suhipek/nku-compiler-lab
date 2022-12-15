@@ -70,18 +70,7 @@ public:
     UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
     void output(int level);
     void typeCheck(); // unfinished
-    // void genCode(); // unfinished
-};
-
-class UnaryExpr : public ExprNode
-{
-private:
-    int op;
-    ExprNode *expr;
-public:
-    enum{NOT, SUB};
-    UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
-    void output(int level);
+    void genCode(); // unfinished
 };
 
 class Constant : public ExprNode
@@ -177,16 +166,6 @@ public:
     void genCode(); // unfinished
 };
 
-class WhileStmt : public StmtNode
-{
-private:
-    ExprNode *cond;
-    StmtNode *body;
-public:
-    WhileStmt(ExprNode *cond, StmtNode *body) : cond(cond), body(body){};
-    void output(int level);
-};
-
 class ReturnStmt : public StmtNode
 {
 private:
@@ -233,27 +212,6 @@ public:
     void output(int level);
     void typeCheck(); // 要不要实现啊？当时写得太割裂了
     void genCode(); // unfinished
-};
-
-class ExprStmt : public StmtNode
-{
-private:
-    ExprNode *expr;
-public:
-    ExprStmt(ExprNode *expr) : expr(expr) {};
-    void output(int level);
-};
-
-class FuncParams : public Node
-{
-private:
-    std::vector<Type *> types;
-    std::vector<DeclStmt*> decls;
-public:
-    FuncParams(){}
-    void append(Type*, DeclStmt*);
-    std::vector<Type *> getTypes() const {return types;};
-    void output(int level);
 };
 
 class FunctionDef : public StmtNode
