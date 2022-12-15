@@ -2,8 +2,11 @@
 %{
     #define YY_NO_UNPUT
     #define YY_NO_INPUT
+    #include <string>
 
     #include "parser.h"
+    #include <sstream>
+    #include <iomanip>
     #include <ostream>
     #include <fstream>
     using namespace std;
@@ -19,10 +22,18 @@
 %}
 
 DECIMIAL ([1-9][0-9]*|0)
+HEX (0[xX][0-9a-fA-F]+)
+OCT (0[0-7]+)
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 EOL (\r\n|\n|\r)
 WHITE [\t ]
+commentbegin "/*"
+commentend "*/"
+commentline "//"
+commentelement [^\n]
+
 %x BLOCKCOMMENT
+%x LINECOMMENT
 
 %%
 
@@ -36,10 +47,25 @@ WHITE [\t ]
         DEBUG_FOR_LAB4("INT\tint");
     return INT;
 }
+"const" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("CONST\tconst");
+    return CONST;
+}
 "void" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("VOID\tvoid");
     return VOID;
+}
+"while" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("WHILE\twhile");
+        return WHILE;
+}
+"for" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("FOR\tfor");
+        return FOR;
 }
 "if" {
     if(dump_tokens)
@@ -73,11 +99,74 @@ WHITE [\t ]
         DEBUG_FOR_LAB4("LESS\t<");
     return LESS;
 }
+">" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("GREATER\t>");
+    return GREATER;
+}
+"==" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("EQ\t==");
+        return EQ;
+}
+"!=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("NEQ\t!=");
+        return NEQ;
+}
+"<=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("LEQ\t<=");
+        return LEQ;
+}
+">=" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("GEQ\t>=");
+        return GEQ;
+}
+"&&" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("AND\t&&");
+        return AND;
+}
+"||" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("OR\t||");
+        return OR;
+}
+
 "+" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("ADD\t+");
     return ADD;
 }
+"-" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("SUB\t-");
+        return SUB;
+}
+"*" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("STAR\t*");
+        return STAR;
+}
+"/" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("DIV\t/");
+        return DIV;
+}
+"%" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("MOD\t%");
+        return MOD;
+}
+"!" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("NOT\t!");
+        return NOT;
+}
+
+
 ";" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("SEMICOLON\t;");
@@ -103,10 +192,31 @@ WHITE [\t ]
         DEBUG_FOR_LAB4("RBRACE\t}");
     return RBRACE;
 }
+"," {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("COMMA\t,");
+    return COMMA;
+}
 
+{HEX} {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("HEX");
+    stringstream conv;
+    conv << hex << yytext;
+    conv >> yylval.itype;
+    return INTEGER;
+}
+{OCT} {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("OCT");
+    stringstream conv;
+    conv << oct << yytext;
+    conv >> yylval.itype;
+    return INTEGER;
+}
 {DECIMIAL} {
     if(dump_tokens)
-        DEBUG_FOR_LAB4(yytext);
+        DEBUG_FOR_LAB4("DEC");
     yylval.itype = atoi(yytext);
     return INTEGER;
 }
@@ -120,6 +230,28 @@ WHITE [\t ]
     yylval.strtype = lexeme;
     return ID;
 }
+{commentbegin} {
+    BEGIN BLOCKCOMMENT;
+}
+<BLOCKCOMMENT>{commentelement} {
+}
+<BLOCKCOMMENT>{EOL} {
+    yylineno++;
+}
+<BLOCKCOMMENT>{commentend} {
+    BEGIN INITIAL;
+}
+
+{commentline} {
+    BEGIN LINECOMMENT;
+}
+<LINECOMMENT>{commentelement} {
+}
+<LINECOMMENT>{EOL} {
+    yylineno++;
+    BEGIN INITIAL;
+}
+
 {EOL} yylineno++;
 {WHITE}
 %%

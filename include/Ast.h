@@ -2,6 +2,8 @@
 #define __AST_H__
 
 #include <fstream>
+#include <vector>
+#include "Type.h"
 #include "Operand.h"
 
 class SymbolEntry;
@@ -51,11 +53,35 @@ private:
     int op;
     ExprNode *expr1, *expr2;
 public:
-    enum {ADD, SUB, AND, OR, LESS, GREATER};
-    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){dst = new Operand(se);};
+    enum {ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ};
+    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){};
     void output(int level);
     void typeCheck();
     void genCode();
+};
+
+class UnaryExpr : public ExprNode
+{
+private:
+    int op;
+    ExprNode *expr;
+public:
+    enum{NOT, SUB};
+    UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
+    void output(int level);
+    void typeCheck(); // unfinished
+    // void genCode(); // unfinished
+};
+
+class UnaryExpr : public ExprNode
+{
+private:
+    int op;
+    ExprNode *expr;
+public:
+    enum{NOT, SUB};
+    UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
+    void output(int level);
 };
 
 class Constant : public ExprNode
@@ -105,8 +131,10 @@ class DeclStmt : public StmtNode
 {
 private:
     Id *id;
+    ExprNode *expr;
 public:
-    DeclStmt(Id *id) : id(id){};
+    DeclStmt(Id *id) : id(id), expr(nullptr){};
+    DeclStmt(Id *id, ExprNode *expr) : id(id), expr(expr){};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -137,6 +165,28 @@ public:
     void genCode();
 };
 
+class WhileStmt : public StmtNode
+{
+private:
+    ExprNode *cond;
+    StmtNode *body;
+public:
+    WhileStmt(ExprNode *cond, StmtNode *body) : cond(cond), body(body){};
+    void output(int level);
+    void typeCheck(); // unfinished
+    void genCode(); // unfinished
+};
+
+class WhileStmt : public StmtNode
+{
+private:
+    ExprNode *cond;
+    StmtNode *body;
+public:
+    WhileStmt(ExprNode *cond, StmtNode *body) : cond(cond), body(body){};
+    void output(int level);
+};
+
 class ReturnStmt : public StmtNode
 {
 private:
@@ -160,13 +210,82 @@ public:
     void genCode();
 };
 
+class ExprStmt : public StmtNode
+{
+private:
+    ExprNode *expr;
+public:
+    ExprStmt(ExprNode *expr) : expr(expr) {};
+    void output(int level);
+    void typeCheck(); // unfinished
+    void genCode(); // unfinished
+};
+
+class FuncParams : public Node
+{
+private:
+    std::vector<Type *> types;
+    std::vector<DeclStmt*> decls;
+public:
+    FuncParams(){}
+    void append(Type*, DeclStmt*);
+    std::vector<Type *> getTypes() const {return types;};
+    void output(int level);
+    void typeCheck(); // 要不要实现啊？当时写得太割裂了
+    void genCode(); // unfinished
+};
+
+class ExprStmt : public StmtNode
+{
+private:
+    ExprNode *expr;
+public:
+    ExprStmt(ExprNode *expr) : expr(expr) {};
+    void output(int level);
+};
+
+class FuncParams : public Node
+{
+private:
+    std::vector<Type *> types;
+    std::vector<DeclStmt*> decls;
+public:
+    FuncParams(){}
+    void append(Type*, DeclStmt*);
+    std::vector<Type *> getTypes() const {return types;};
+    void output(int level);
+};
+
 class FunctionDef : public StmtNode
 {
 private:
     SymbolEntry *se;
+    FuncParams *params;
     StmtNode *stmt;
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : se(se), params(params), stmt(stmt){};
+    void setStmt(StmtNode *stmt){this->stmt = stmt;} // for function prototype
+    void output(int level);
+};
+
+class CallParams : public Node
+{
+protected:
+    std::vector<ExprNode*> params;
+public:
+    CallParams(){}
+    void append(ExprNode* expr);
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class CallExpr : public ExprNode
+{
+protected:
+    CallParams* params; // argument list
+public:
+    CallExpr(SymbolEntry *se, CallParams* params) : ExprNode(se), params(params){};
     void output(int level);
     void typeCheck();
     void genCode();

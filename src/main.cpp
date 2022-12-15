@@ -16,9 +16,15 @@ char outfile[256] = "a.out";
 bool dump_tokens;
 bool dump_ast;
 bool dump_ir;
+extern int yylineno;
 
 int main(int argc, char *argv[])
 {
+    dump_tokens = dump_ast = false;
+    yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
+    yyparse();
+    fclose(yyin);
+    yylineno = 1; // 重置行号
     int opt;
     while ((opt = getopt(argc, argv, "iato:")) != -1)
     {
@@ -57,6 +63,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: fail to open output file\n", outfile);
         exit(EXIT_FAILURE);
     }
+    fprintf(stdout, "Processing %s \n", argv[optind]);
     yyparse();
     if(dump_ast)
         ast.output();
