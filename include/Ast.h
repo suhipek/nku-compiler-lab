@@ -69,8 +69,8 @@ public:
     enum{NOT, SUB};
     UnaryExpr(SymbolEntry *se, int op, ExprNode *expr) : ExprNode(se), op(op), expr(expr){};
     void output(int level);
-    void typeCheck(); // unfinished
-    void genCode(); // unfinished
+    void typeCheck();
+    void genCode();
 };
 
 class Constant : public ExprNode
@@ -196,8 +196,8 @@ private:
 public:
     ExprStmt(ExprNode *expr) : expr(expr) {};
     void output(int level);
-    void typeCheck(); // unfinished
-    void genCode(); // unfinished
+    void typeCheck();
+    void genCode();
 };
 
 class FuncParams : public Node
@@ -210,8 +210,8 @@ public:
     void append(Type*, DeclStmt*);
     std::vector<Type *> getTypes() const {return types;};
     void output(int level);
-    void typeCheck(); // 要不要实现啊？当时写得太割裂了
-    void genCode(); // unfinished
+    void typeCheck() {} // 不需要
+    void genCode() {} // 不需要，话说当时就不该这么实现函数参数
 };
 
 class FunctionDef : public StmtNode
@@ -224,6 +224,8 @@ public:
     FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : se(se), params(params), stmt(stmt){};
     void setStmt(StmtNode *stmt){this->stmt = stmt;} // for function prototype
     void output(int level);
+    void typeCheck();
+    void genCode();
 };
 
 class CallParams : public Node
@@ -234,8 +236,8 @@ public:
     CallParams(){}
     void append(ExprNode* expr);
     void output(int level);
-    void typeCheck();
-    void genCode();
+    void typeCheck() {} // 不需要
+    void genCode() {} // 不需要，话说当时就不该这么实现函数参数
 };
 
 class CallExpr : public ExprNode

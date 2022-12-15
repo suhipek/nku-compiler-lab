@@ -99,6 +99,16 @@ void BinaryExpr::genCode()
     }
 }
 
+void UnaryExpr::genCode()
+{
+    // Todo
+}
+
+void CallExpr::genCode()
+{
+    // Todo
+}
+
 void Constant::genCode()
 {
     // we don't need to generate code.
@@ -194,6 +204,16 @@ void AssignStmt::genCode()
     new StoreInstruction(addr, src, bb);
 }
 
+void ExprStmt::genCode()
+{
+    expr->genCode();
+}
+
+void WhileStmt::genCode()
+{
+    // Todo
+}
+
 void Ast::typeCheck()
 {
     if(root != nullptr)
@@ -206,6 +226,16 @@ void FunctionDef::typeCheck()
 }
 
 void BinaryExpr::typeCheck()
+{
+    // Todo
+}
+
+void UnaryExpr::typeCheck()
+{
+    // Todo
+}
+
+void CallExpr::typeCheck()
 {
     // Todo
 }
@@ -251,6 +281,16 @@ void ReturnStmt::typeCheck()
 }
 
 void AssignStmt::typeCheck()
+{
+    // Todo
+}
+
+void ExprStmt::typeCheck()
+{
+    // Todo
+}
+
+void WhileStmt::typeCheck()
 {
     // Todo
 }
