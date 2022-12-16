@@ -1,0 +1,46 @@
+----------------------------------
+Processing test/lab6/06_func_ret_val2.sy 
+line:6 @func should return a value of type i32
+
+----------------------------------
+Processing test/lab6/00_my_test.sy 
+
+----------------------------------
+Processing test/lab6/05_func_ret_val1.sy 
+line:6 ret type error, should void, but i32
+
+----------------------------------
+Processing test/lab6/03_func_undef.sy 
+line:9 function call @func - parameter number mismatched
+
+----------------------------------
+Processing test/lab6/08_cond_test.sy 
+line:21 while - type i32 mismatched, convert to bool
+line:19 while - type i32 mismatched, convert to bool
+line:18 while - type i32 mismatched, convert to bool
+
+----------------------------------
+Processing test/lab6/02_var_redef.sy 
+Line 6: identifier "b" being redefined
+make: *** [Makefile:64: test/lab6/02_var_redef.ast] Error 1
+
+----------------------------------
+Processing test/lab6/07_expr_test.sy 
+Line 19: function "func" is undefined
+compiler: src/parser.y:188: int yyparse(): Assertion `se != nullptr' failed.
+make: *** [Makefile:64: test/lab6/07_expr_test.ast] Aborted (core dumped)
+make: *** Deleting file 'test/lab6/07_expr_test.ast'
+
+----------------------------------
+Processing test/lab6/01_var_undef.sy 
+ Line 5: identifier "a" is undefined
+compiler: src/parser.y:82: int yyparse(): Assertion `se != nullptr' failed.
+make: *** [Makefile:64: test/lab6/01_var_undef.ast] Aborted (core dumped)
+make: *** Deleting file 'test/lab6/01_var_undef.ast'
+
+----------------------------------
+Processing test/lab6/04_func_redef.sy 
+line:24 function call @func - parameter number mismatched
+make: *** [Makefile:64: test/lab6/04_func_redef.ast] Segmentation fault (core dumped)
+make: *** Deleting file 'test/lab6/04_func_redef.ast'
+make: Target 'testlab5' not remade because of errors.
