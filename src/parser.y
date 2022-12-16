@@ -28,7 +28,7 @@
 
 %start Program
 %token <strtype> ID 
-%token <itype> INTEGER
+%token <itype> INTEGER BOOL
 %token IF ELSE WHILE FOR
 %token HEX OCT
 %token INT VOID
@@ -309,6 +309,10 @@ Type
     }
     | VOID {
         $$ = TypeSystem::voidType;
+    }
+    | BOOL {
+        nowType = TypeSystem::boolType;
+        $$ = TypeSystem::boolType;
     }
     ;
 
