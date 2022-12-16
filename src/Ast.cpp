@@ -9,10 +9,12 @@
 extern FILE *yyout;
 int Node::counter = 0;
 IRBuilder* Node::builder = nullptr;
+int yyget_lineno(void);
 
 Node::Node()
 {
     seq = counter++;
+    lineno = yyget_lineno();
 }
 
 void Node::backPatch(std::vector<Instruction*> &list, BasicBlock*bb)
@@ -214,83 +216,123 @@ void WhileStmt::genCode()
     // Todo
 }
 
-void Ast::typeCheck()
+void Ast::typeCheck(Type* retType)
 {
     if(root != nullptr)
         root->typeCheck();
 }
 
-void FunctionDef::typeCheck()
+void FunctionDef::typeCheck(Type* retType)
+{
+    Type* _retType = ((FunctionType *)(se->getType()))->getRetType();
+    int beg_ret_cnt = ReturnStmt::getCheckCnt();
+    stmt->typeCheck(_retType);
+    int end_ret_cnt = ReturnStmt::getCheckCnt(); // 计算return语句的个数
+    if(beg_ret_cnt == end_ret_cnt && _retType != TypeSystem::voidType)
+    {
+        BEG_RED;
+        fprintf(stderr, "line:%d %s should return a value of type %s\n", 
+            lineno, se->toStr().c_str(), _retType->toStr().c_str());
+        END_COLOR;
+    }
+}
+
+void BinaryExpr::typeCheck(Type* retType)
 {
     // Todo
 }
 
-void BinaryExpr::typeCheck()
+void UnaryExpr::typeCheck(Type* retType)
 {
     // Todo
 }
 
-void UnaryExpr::typeCheck()
+void CallExpr::typeCheck(Type* retType)
+{
+     // 读取vector<ExprNode*> params中的内容
+     std::vector<ExprNode*> params_vec = params->params;
+     for(int i = 0; i < params_vec.size(); i++)
+     {
+         params_vec[i]->typeCheck(retType);
+     }
+     // 找到函数的参数列表
+}
+
+void Constant::typeCheck(Type* retType)
+{
+    // no need to check type.
+}
+
+void Id::typeCheck(Type* retType)
+{
+    
+}
+
+void IfStmt::typeCheck(Type* retType)
+{
+    cond->typeCheck(retType);
+    thenStmt->typeCheck(retType);
+}
+
+void IfElseStmt::typeCheck(Type* retType)
+{
+    cond->typeCheck(retType);
+    thenStmt->typeCheck(retType);
+    elseStmt->typeCheck(retType);
+}
+
+void CompoundStmt::typeCheck(Type* retType)
+{
+    stmt->typeCheck(retType);
+}
+
+void SeqNode::typeCheck(Type* retType)
+{
+    stmt1->typeCheck(retType);
+    stmt2->typeCheck(retType);
+}
+
+void DeclStmt::typeCheck(Type* retType)
+{
+    expr->typeCheck(retType);
+}
+
+int ReturnStmt::check_cnt = 0; // 类型检查计数器
+
+void ReturnStmt::typeCheck(Type* retType)
+{
+    check_cnt++;
+    Type *_retType = retValue->getSymPtr()->getType();
+    CallExpr *callExpr = dynamic_cast<CallExpr *>(retValue); // 判断表达式是否为函数调用
+    if(callExpr == nullptr && _retType != retType)
+    {
+        BEG_RED;
+        fprintf(stderr, "line:%d ret type error, should %s, but %s\n", 
+            lineno, retType->toStr().c_str(), _retType->toStr().c_str());
+        END_COLOR;
+    }
+    else if(callExpr != nullptr && 
+        ((FunctionType *)(callExpr->getSymPtr()->getType()))->getRetType() != retType)
+    {
+        BEG_RED;
+        fprintf(stderr, "line:%d ret type error, should %s, but %s (CallExpr)\n", 
+            lineno, retType->toStr().c_str(), callExpr->getSymPtr()->getType()->toStr().c_str());
+        END_COLOR;
+    }
+    retValue->typeCheck(retType);
+}
+
+void AssignStmt::typeCheck(Type* retType)
 {
     // Todo
 }
 
-void CallExpr::typeCheck()
+void ExprStmt::typeCheck(Type* retType)
 {
     // Todo
 }
 
-void Constant::typeCheck()
-{
-    // Todo
-}
-
-void Id::typeCheck()
-{
-    // Todo
-}
-
-void IfStmt::typeCheck()
-{
-    // Todo
-}
-
-void IfElseStmt::typeCheck()
-{
-    // Todo
-}
-
-void CompoundStmt::typeCheck()
-{
-    // Todo
-}
-
-void SeqNode::typeCheck()
-{
-    // Todo
-}
-
-void DeclStmt::typeCheck()
-{
-    // Todo
-}
-
-void ReturnStmt::typeCheck()
-{
-    // Todo
-}
-
-void AssignStmt::typeCheck()
-{
-    // Todo
-}
-
-void ExprStmt::typeCheck()
-{
-    // Todo
-}
-
-void WhileStmt::typeCheck()
+void WhileStmt::typeCheck(Type* retType)
 {
     // Todo
 }

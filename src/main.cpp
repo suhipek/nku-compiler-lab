@@ -66,9 +66,9 @@ int main(int argc, char *argv[])
     fprintf(stdout, "\n----------------------------------\n");
     fprintf(stdout, "Processing %s \n", argv[optind]);
     yyparse();
+    ast.typeCheck();
     if(dump_ast)
         ast.output();
-    ast.typeCheck();
     ast.genCode(&unit);
     if(dump_ir)
         unit.output();
