@@ -271,25 +271,52 @@ Type* CallExpr::typeCheck(Type* retType)
     if(symbolEntry->getType() == TypeSystem::errorType)
         return TypeSystem::errorType;
     // 读取vector<ExprNode*> params中的内容
-    std::vector<ExprNode*> params_vec = params->params;
+    std::vector<ExprNode*> params_vec = params->params; // 实参
     // 找到函数的参数列表
-    std::vector<Type*> formal_type = ((FunctionType *)(symbolEntry->getType()))->getParamsType();
-    if(params_vec.size() != formal_type.size())
+    std::vector<Type*> formal_type; // 形参
+    
+    if(((IdentifierSymbolEntry *)symbolEntry)->reverse_func == nullptr)
     {
-        BEG_RED;
-        fprintf(stderr, "line:%d function call %s - parameter number mismatched\n", 
+        fprintf(stderr, "[DEBUG] line:%d function call %s - function se has no reverse\n", 
             lineno, symbolEntry->toStr().c_str());
-        END_COLOR;
         return TypeSystem::errorType;
     }
-    for(int i = 0; i < (int)(params_vec.size()); i++)
-    {
-        Type *real_type = params_vec[i]->typeCheck(retType);
-        if(real_type != formal_type[i])
+    else
+    { // 存在多个函数，遍历其形参表，找到匹配的函数
+        FunctionDef *now = ((IdentifierSymbolEntry *)symbolEntry)->reverse_func;
+        bool flag = false;
+        while(now != nullptr)
         {
+            formal_type = now->getFormalTypes();
+            if(params_vec.size() == formal_type.size())
+            { // 参数个数相同，检查类型是否匹配
+                flag = true;
+                for(int i = 0; i < (int)(params_vec.size()); i++)
+                { // 检查每个参数的类型 
+                    Type *real_type = params_vec[i]->typeCheck(retType);
+                    if(real_type != formal_type[i])
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+                if(flag)
+                { // 找到匹配的函数
+                    symbolEntry = now->getSymPtr();
+                    BEG_BLUE;
+                    fprintf(stderr, "line:%d function call %s - matched type %s\n", 
+                        lineno, symbolEntry->toStr().c_str() , symbolEntry->getType()->toStr().c_str());
+                    END_COLOR;
+                    break;
+                }
+            }
+            now = now->next;
+        }
+        if(!flag)
+        { // 没有找到匹配的函数
             BEG_RED;
-            fprintf(stderr, "line:%d function call %s - parameter %d type mismatched\n", 
-                lineno, symbolEntry->toStr().c_str(), (int)i);
+            fprintf(stderr, "line:%d function call %s - no matching function\n", 
+                lineno, symbolEntry->toStr().c_str());
             END_COLOR;
             return TypeSystem::errorType;
         }

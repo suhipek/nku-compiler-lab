@@ -477,32 +477,35 @@ FuncDef
                 yyget_lineno(), (char*)$2);
             se = new IdentifierSymbolEntry(
                 TypeSystem::errorType, (std::string)"_redefined_"+$2, identifiers->getLevel());
+            $$ = new FunctionDef(se, $5, $7);
         }
         else if(se != nullptr)
         { // 重定义，但参数不匹配
             // 不能新建entry了，因为会导致函数名被覆盖
             legalRedefine = true;
+            $$ = new FunctionDef(new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel()), $5, $7);
         }
         else
         {
             se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
             globals->install($2, se); // 函数定义时，将函数名加入全局符号表
+            $$ = new FunctionDef(se, $5, $7);
         }
         
 
-        $$ = new FunctionDef(se, $5, $7);
+        // $$ = new FunctionDef(se, $5, $7);
         SymbolTable *top = identifiers;
 
         if(legalRedefine)
         { // 合法重定义 TODO
-            // FunctionDef *current = (IdentifierSymbolEntry *)se->reverse_func;
-            // while(current->next != nullptr)
-            //     current = current->next;
-            // current->next = (FunctionDef *)$$;
+            FunctionDef *current = (FunctionDef *)(((IdentifierSymbolEntry *)se)->reverse_func);
+            while(current->next != nullptr)
+                current = current->next;
+            current->next = (FunctionDef *)$$;
         }
         else if(!isSame)
         { // 非重定义
-            // (IdentifierSymbolEntry *)se->reverse_func = $$;
+            ((IdentifierSymbolEntry *)se)->reverse_func = (FunctionDef *)$$;
         }
         identifiers = identifiers->getPrev();
         delete top;

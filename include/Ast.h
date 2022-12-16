@@ -245,6 +245,8 @@ public:
         se(se), params(params), stmt(stmt), next(nullptr){};
     void setStmt(StmtNode *stmt){this->stmt = stmt;} // for function prototype
     void output(int level);
+    std::vector<Type *> getFormalTypes() {return params->getTypes();}
+    SymbolEntry *getSymPtr() {return se;}
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
 };

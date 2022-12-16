@@ -6,6 +6,7 @@
 
 class Type;
 class Operand;
+class StmtNode;
 class FunctionDef;
 
 class SymbolEntry
