@@ -24,6 +24,7 @@ IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int s
 {
     this->scope = scope;
     addr = nullptr;
+    reverse_func = nullptr;
 }
 
 std::string IdentifierSymbolEntry::toStr()

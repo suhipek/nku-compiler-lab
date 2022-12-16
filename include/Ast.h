@@ -238,9 +238,11 @@ class FunctionDef : public StmtNode
 private:
     SymbolEntry *se;
     FuncParams *params;
-    StmtNode *stmt;
+    StmtNode *stmt;  
 public:
-    FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : se(se), params(params), stmt(stmt){};
+    FunctionDef *next;
+    FunctionDef(SymbolEntry *se, FuncParams *params, StmtNode *stmt) : 
+        se(se), params(params), stmt(stmt), next(nullptr){};
     void setStmt(StmtNode *stmt){this->stmt = stmt;} // for function prototype
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);

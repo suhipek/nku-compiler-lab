@@ -58,6 +58,13 @@ public:
     std::string toStr();
 };
 
+class ErrorType : public Type
+{
+public:
+    ErrorType() : Type(Type::VOID){};
+    std::string toStr();
+};
+
 class TypeSystem
 {
 private:
@@ -65,12 +72,14 @@ private:
     static IntType commonBool;
     static VoidType commonVoid;
     static IntType commonConstInt;
+    static ErrorType commonError;
 public:
     static Type *intType;
     static Type *voidType;
     static Type *constIntType;
     static Type *getConstTypeOf(Type *type);
     static Type *boolType;
+    static Type *errorType;
 };
 
 #endif

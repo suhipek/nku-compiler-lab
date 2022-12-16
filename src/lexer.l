@@ -47,7 +47,7 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("INT\tint");
     return INT;
 }
-"BOOL" {
+"bool" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("BOOL\tbool");
     return BOOL;

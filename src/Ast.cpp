@@ -249,14 +249,14 @@ Type* BinaryExpr::typeCheck(Type* retType)
     Type* t1 = expr1->typeCheck(retType);
     Type* t2 = expr2->typeCheck(retType);
     if(t1 == nullptr || t2 == nullptr)
-        return nullptr;
+        return TypeSystem::errorType;
     if(t1 != t2)
     {
         BEG_RED;
         fprintf(stderr, "line:%d binary op - type mismatched between %s and %s\n", 
             lineno, t1->toStr().c_str(), t2->toStr().c_str());
         END_COLOR;
-        return nullptr;
+        return TypeSystem::errorType;
     }
     return t1;
 }
@@ -268,6 +268,8 @@ Type* UnaryExpr::typeCheck(Type* retType)
 
 Type* CallExpr::typeCheck(Type* retType)
 {
+    if(symbolEntry->getType() == TypeSystem::errorType)
+        return TypeSystem::errorType;
     // 读取vector<ExprNode*> params中的内容
     std::vector<ExprNode*> params_vec = params->params;
     // 找到函数的参数列表
@@ -278,9 +280,9 @@ Type* CallExpr::typeCheck(Type* retType)
         fprintf(stderr, "line:%d function call %s - parameter number mismatched\n", 
             lineno, symbolEntry->toStr().c_str());
         END_COLOR;
-        return nullptr;
+        return TypeSystem::errorType;
     }
-    for(auto i = params_vec.size() - 1; i >= 0; i--)
+    for(int i = 0; i < (int)(params_vec.size()); i++)
     {
         Type *real_type = params_vec[i]->typeCheck(retType);
         if(real_type != formal_type[i])
@@ -289,7 +291,7 @@ Type* CallExpr::typeCheck(Type* retType)
             fprintf(stderr, "line:%d function call %s - parameter %d type mismatched\n", 
                 lineno, symbolEntry->toStr().c_str(), (int)i);
             END_COLOR;
-            return nullptr;
+            return TypeSystem::errorType;
         }
     }
     return ((FunctionType *)(symbolEntry->getType()))->getRetType();
@@ -317,7 +319,7 @@ Type* IfStmt::typeCheck(Type* retType)
     {
         cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
         BEG_BLUE;
-        fprintf(stderr, "line:%d while - type %s mismatched, convert to bool\n", 
+        fprintf(stderr, "line:%d if - type %s mismatched, convert to bool\n", 
             lineno, condType->toStr().c_str());
         END_COLOR;
     }
@@ -332,7 +334,7 @@ Type* IfElseStmt::typeCheck(Type* retType)
     {
         cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
         BEG_BLUE;
-        fprintf(stderr, "line:%d while - type %s mismatched, convert to bool\n", 
+        fprintf(stderr, "line:%d ifelse - type %s mismatched, convert to bool\n", 
             lineno, condType->toStr().c_str());
         END_COLOR;
     }
@@ -360,7 +362,8 @@ Type* DeclStmt::typeCheck(Type* retType)
         return nullptr;
     Type* rType = expr->typeCheck(retType);
     Type* lType = id->typeCheck(retType);
-    if(rType != lType)
+    // printf("rType:%s, lType:%s", rType->toStr().c_str(), lType->toStr().c_str());
+    if(rType != lType && lType != TypeSystem::errorType && rType != TypeSystem::errorType)
     {
         BEG_RED;
         fprintf(stderr, "line:%d declare - type mismatched between %s and %s\n", 
@@ -375,16 +378,20 @@ int ReturnStmt::check_cnt = 0; // 类型检查计数器
 Type* ReturnStmt::typeCheck(Type* retType)
 {
     check_cnt++;
-    Type *_retType = retValue->getSymPtr()->getType();
+    Type *_retType; // 返回值类型
+    if(retValue == nullptr)
+        _retType = TypeSystem::voidType;
+    else
+        _retType = retValue->getSymPtr()->getType(); 
     CallExpr *callExpr = dynamic_cast<CallExpr *>(retValue); // 判断表达式是否为函数调用
-    if(callExpr == nullptr && _retType != retType)
+    if(callExpr == nullptr && _retType != retType && retType != nullptr)
     {
         BEG_RED;
         fprintf(stderr, "line:%d ret type error, should %s, but %s\n", 
             lineno, retType->toStr().c_str(), _retType->toStr().c_str());
         END_COLOR;
     }
-    else if(callExpr != nullptr && 
+    else if(callExpr != nullptr && retType != nullptr &&
         ((FunctionType *)(callExpr->getSymPtr()->getType()))->getRetType() != retType)
     {
         BEG_RED;
@@ -392,7 +399,8 @@ Type* ReturnStmt::typeCheck(Type* retType)
             lineno, retType->toStr().c_str(), callExpr->getSymPtr()->getType()->toStr().c_str());
         END_COLOR;
     }
-    retValue->typeCheck(retType);
+    if(retValue != nullptr)
+        retValue->typeCheck(retType);
     return nullptr;
 }
 
@@ -400,7 +408,7 @@ Type* AssignStmt::typeCheck(Type* retType)
 {
     Type* lType = lval->typeCheck(retType);
     Type* rType = expr->typeCheck(retType);
-    if(lType != rType)
+    if(lType != rType && lType != TypeSystem::errorType && rType != TypeSystem::errorType)
     {
         BEG_RED;
         fprintf(stderr, "line:%d assign - type mismatched between %s and %s\n", 

@@ -1,5 +1,6 @@
 %code top{
     #include <iostream>
+    #include <cstring>
     #include <assert.h>
     #include "parser.h"
     extern Ast ast;
@@ -77,9 +78,9 @@ LVal
         se = identifiers->lookup($1);
         if(se == nullptr)
         {
-            fprintf(stderr, "\033[31m Line %d: identifier \"%s\" is undefined\033[39m\n", yyget_lineno(), (char*)$1);
-            delete [](char*)$1;
-            assert(se != nullptr);
+            fprintf(stderr, "\033[31mLine %d: identifier \"%s\" is undefined\033[39m\n", yyget_lineno(), (char*)$1);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_undefined_"+$1, identifiers->getLevel());
         }
         $$ = new Id(se);
         delete []$1;
@@ -181,11 +182,12 @@ CallExp
     ID LPAREN CallParam RPAREN {
         SymbolEntry *se;
         se = identifiers->lookup($1);
+
         if(se == nullptr)
         {
             fprintf(stderr, "\033[31mLine %d: function \"%s\" is undefined\033[39m\n", yyget_lineno(), (char*)$1);
-            delete [](char*)$1;
-            assert(se != nullptr);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_undefined_"+$1, identifiers->getLevel());
         }
         $$ = new CallExpr(se, $3);
         delete []$1;
@@ -357,11 +359,14 @@ VarDef
         if(identifiers->lookup($1) != nullptr)
         {
             fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
-            exit(1);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_redefined_"+$1, identifiers->getLevel());
         }
-
-        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
-        identifiers->install($1, se);
+        else
+        {
+            se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+            identifiers->install($1, se);
+        }
         $$ = new DeclStmt(new Id(se));
         delete []$1;
     }
@@ -373,11 +378,14 @@ VarDef
         if(identifiers->lookup($1) != nullptr)
         {
             fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
-            exit(1);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_redefined_"+$1, identifiers->getLevel());
         }
-
-        se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
-        identifiers->install($1, se);
+        else
+        {
+            se = new IdentifierSymbolEntry(nowType, $1, identifiers->getLevel());
+            identifiers->install($1, se);
+        }
         $$ = new DeclStmt(new Id(se), $3);
         delete []$1;
     }
@@ -391,11 +399,14 @@ ConstDef
         if(identifiers->lookup($1) != nullptr)
         {
             fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
-            exit(1);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_redefined_"+$1, identifiers->getLevel());
         }
-
-        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
-        identifiers->install($1, se);
+        else
+        {
+            se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+            identifiers->install($1, se);
+        }
         $$ = new DeclStmt(new Id(se));
         delete []$1;
     }
@@ -407,11 +418,14 @@ ConstDef
         if(identifiers->lookup($1) != nullptr)
         {
             fprintf(stderr, "\033[31mLine %d: identifier \"%s\" being redefined\033[39m\n", yyget_lineno(), (char*)$1);
-            exit(1);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_redefined_"+$1, identifiers->getLevel());
         }
-
-        se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
-        identifiers->install($1, se);
+        else
+        {
+            se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+            identifiers->install($1, se);
+        }
         $$ = new DeclStmt(new Id(se), $3);
         delete []$1;
     }
@@ -431,12 +445,65 @@ FuncDef
     {
         Type *funcType;
         funcType = new FunctionType($1, $5->getTypes()); // FunctionType(Type* returnType, std::vector<Type*> paramsType)
-        SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        globals->install($2, se); // 函数定义时，将函数名加入全局符号表
+        
+        // 是否被重定义、参数是否匹配
+        bool isSame = false;
+        bool legalRedefine = false;
+        SymbolEntry *se = globals->lookup($2);
+        if(se != nullptr)
+        { // 函数重定义
+            FunctionType *DefinedType = dynamic_cast<FunctionType *>(se->getType());
+            if(DefinedType != nullptr)
+            {
+                std::vector<Type*> DefinedParamsType = DefinedType->getParamsType();
+                std::vector<Type*> NewParamsType = $5->getTypes();
+                if(DefinedParamsType.size() == NewParamsType.size())
+                {
+                    isSame = true;
+                    for(int i = 0; i < (int)(DefinedParamsType.size()); i++)
+                    {
+                        if(DefinedParamsType[i] != NewParamsType[i])
+                        {
+                            isSame = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if(isSame)
+        { // 完全一致的重定义
+            fprintf(stderr, "\033[31mLine %d: function \"%s\" being redefined\033[39m\n", 
+                yyget_lineno(), (char*)$2);
+            se = new IdentifierSymbolEntry(
+                TypeSystem::errorType, (std::string)"_redefined_"+$2, identifiers->getLevel());
+        }
+        else if(se != nullptr)
+        { // 重定义，但参数不匹配
+            // 不能新建entry了，因为会导致函数名被覆盖
+            legalRedefine = true;
+        }
+        else
+        {
+            se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
+            globals->install($2, se); // 函数定义时，将函数名加入全局符号表
+        }
         
 
         $$ = new FunctionDef(se, $5, $7);
         SymbolTable *top = identifiers;
+
+        if(legalRedefine)
+        { // 合法重定义 TODO
+            // FunctionDef *current = (IdentifierSymbolEntry *)se->reverse_func;
+            // while(current->next != nullptr)
+            //     current = current->next;
+            // current->next = (FunctionDef *)$$;
+        }
+        else if(!isSame)
+        { // 非重定义
+            // (IdentifierSymbolEntry *)se->reverse_func = $$;
+        }
         identifiers = identifiers->getPrev();
         delete top;
         delete []$2;

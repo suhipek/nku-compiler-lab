@@ -5,11 +5,13 @@ IntType TypeSystem::commonInt = IntType(32);
 IntType TypeSystem::commonBool = IntType(1);
 VoidType TypeSystem::commonVoid = VoidType();
 IntType TypeSystem::commonConstInt = IntType(4, true);
+ErrorType TypeSystem::commonError = ErrorType();
 
 Type* TypeSystem::intType = &commonInt;
 Type* TypeSystem::voidType = &commonVoid;
 Type* TypeSystem::boolType = &commonBool;
 Type* TypeSystem::constIntType = &commonConstInt;
+Type* TypeSystem::errorType = &commonError;
 
 std::string IntType::toStr()
 {
@@ -29,6 +31,11 @@ std::string IntType::toStr()
 std::string VoidType::toStr()
 {
     return "void";
+}
+
+std::string ErrorType::toStr()
+{
+    return "Type Error";
 }
 
 std::string FunctionType::toStr()
