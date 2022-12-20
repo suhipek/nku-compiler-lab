@@ -97,6 +97,7 @@ void BinaryExpr::genCode()
 {
     BasicBlock *bb = builder->getInsertBB();
     Function *func = bb->getParent();
+    dst = new Operand(symbolEntry);
     if (op == AND)
     {
         BasicBlock *trueBB = new BasicBlock(func);  // if the result of lhs is true, jump to the trueBB.
@@ -157,7 +158,7 @@ void BinaryExpr::genCode()
         int opcode;
         switch (op)
         {
-        case ADD:
+        case ADD: 
             opcode = BinaryInstruction::ADD;
             break;
         case SUB:
@@ -460,7 +461,8 @@ Type* IfStmt::typeCheck(Type* retType)
     Type *condType = cond->typeCheck();
     if(condType != TypeSystem::boolType)
     {
-        cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
+        // cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
+        // bug: dst = 0x0 ????
         BEG_BLUE;
         fprintf(stderr, "line:%d if - type %s mismatched, convert to bool\n", 
             lineno, condType->toStr().c_str());
@@ -475,7 +477,8 @@ Type* IfElseStmt::typeCheck(Type* retType)
     Type *condType = cond->typeCheck();
     if(condType != TypeSystem::boolType)
     {
-        cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
+        // cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
+        // bug: dst = 0x0 ????
         BEG_BLUE;
         fprintf(stderr, "line:%d ifelse - type %s mismatched, convert to bool\n", 
             lineno, condType->toStr().c_str());

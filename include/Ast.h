@@ -47,7 +47,7 @@ protected:
     SymbolEntry *symbolEntry;
     Operand *dst;   // The result of the subtree is stored into dst.
 public:
-    ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){};
+    ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){dst = new Operand(symbolEntry);};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
 };
@@ -59,7 +59,7 @@ private:
     ExprNode *expr1, *expr2;
 public:
     enum {ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ};
-    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){};
+    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){dst = new Operand(se);};
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
@@ -84,7 +84,7 @@ private:
     Type *type;
     ExprNode *expr;
 public:
-    ConvExpr(SymbolEntry *se, Type *type, ExprNode *expr) : ExprNode(se), type(type), expr(expr){};
+    ConvExpr(SymbolEntry *se, Type *type, ExprNode *expr) : ExprNode(se), type(type), expr(expr){dst = new Operand(se);};
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
