@@ -19,8 +19,10 @@ void BasicBlock::insertBack(Instruction *inst)
 // insert the instruction dst before src.
 void BasicBlock::insertBefore(Instruction *dst, Instruction *src)
 {
-    // Todo
-
+    dst->setPrev(src->getPrev());
+    dst->setNext(src);
+    src->getPrev()->setNext(dst);
+    src->setPrev(dst);
     dst->setParent(this);
 }
 
@@ -39,6 +41,12 @@ void BasicBlock::output() const
     {
         fprintf(yyout, "%*c; preds = %%B%d", 32, '\t', pred[0]->getNo());
         for (auto i = pred.begin() + 1; i != pred.end(); i++)
+            fprintf(yyout, ", %%B%d", (*i)->getNo());
+    }
+    if (!succ.empty())
+    {
+        fprintf(yyout, "%*c; succs = %%B%d", 32, '\t', succ[0]->getNo());
+        for (auto i = succ.begin() + 1; i != succ.end(); i++)
             fprintf(yyout, ", %%B%d", (*i)->getNo());
     }
     fprintf(yyout, "\n");

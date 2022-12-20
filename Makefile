@@ -1,7 +1,7 @@
 SRC_PATH ?= src
 INC_PATH += include
 BUILD_PATH ?= build
-TEST_PATH ?= test/lab6
+TEST_PATH ?= test/level1-1
 OBJ_PATH ?= $(BUILD_PATH)/obj
 BINARY ?= $(BUILD_PATH)/compiler
 SYSLIB_PATH ?= sysyruntimelibrary
@@ -76,7 +76,7 @@ testlab4:app $(OUTPUT_LAB4)
 
 testlab5:clean app $(OUTPUT_LAB5)
 
-testlab6:app $(OUTPUT_LAB6)
+testlab6:clean app $(OUTPUT_LAB6)
 
 .ONESHELL:
 test:app

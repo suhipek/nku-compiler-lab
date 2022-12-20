@@ -230,6 +230,7 @@ public:
     std::vector<Type *> getTypes() const {return types;};
     void output(int level);
     Type* typeCheck(Type* retType=nullptr) {return nullptr;} // 不需要
+    std::vector<DeclStmt*> getDecls() const {return decls;} // 获取参数列表DeclStmt
     void genCode() {} // 不需要，话说当时就不该这么实现函数参数
 };
 

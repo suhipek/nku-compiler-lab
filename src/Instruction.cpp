@@ -311,3 +311,46 @@ void StoreInstruction::output() const
 
     fprintf(yyout, "  store %s %s, %s %s, align 4\n", src_type.c_str(), src.c_str(), dst_type.c_str(), dst.c_str());
 }
+
+
+CallInstruction::CallInstruction(
+    Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb) : Instruction(CALL, insert_bb)
+{
+    // todo: how to pass args and se as operands
+    operands.push_back(dst);
+    dst->addUse(this);
+    this->se = se;
+    for(auto it = args.begin(); it != args.end(); ++it)
+    {
+        operands.push_back(*it);
+        (*it)->addUse(this);
+    }
+}
+
+CallInstruction::~CallInstruction()
+{
+    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+        (*it)->removeUse(this);
+}
+
+void CallInstruction::output() const
+{
+    std::string dst = operands[0]->toStr();
+    std::string func_name = se->toStr(); // 记得加上 @
+    std::string func_type = se->getType()->toStr();
+    std::string func_params;
+    // Type *retType = ((FunctionType *)(se->getType()))->getRetType();
+
+    // 遍历转换参数列表
+    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+    {
+        std::string arg = (*it)->toStr();
+        std::string arg_type = (*it)->getType()->toStr();
+        func_params += arg_type + " " + arg;
+        if(it != operands.end() - 1)
+            func_params += ", ";
+    }
+
+    fprintf(yyout, "  %s = call %s @%s(%s)\n", 
+        dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
+}
