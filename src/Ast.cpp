@@ -207,7 +207,7 @@ void BinaryExpr::genCode()
 
 void BinaryExpr::genBr()
 {
-    
+
 }
 
 void UnaryExpr::genCode()
@@ -308,8 +308,9 @@ void WhileStmt::genCode()
     BasicBlock *cond_bb = new BasicBlock(func);
     BasicBlock *body_bb = new BasicBlock(func);
     BasicBlock *end_bb = new BasicBlock(func);
+    BasicBlock *origin_bb = builder->getInsertBB();
     
-    new UncondBrInstruction(cond_bb, builder->getInsertBB());
+    new UncondBrInstruction(cond_bb, origin_bb);
     builder->setInsertBB(cond_bb);
     cond->genCode();
     backPatch(cond->trueList(), body_bb);
@@ -317,7 +318,7 @@ void WhileStmt::genCode()
 
     builder->setInsertBB(body_bb);
     body->genCode();
-    new UncondBrInstruction(cond_bb, builder->getInsertBB());
+    new UncondBrInstruction(cond_bb, body_bb);
     backPatch(body->trueList(), cond_bb);
     backPatch(body->falseList(), end_bb);
 
@@ -664,7 +665,7 @@ Type* WhileStmt::typeCheck(Type* retType)
     Type *condType = cond->typeCheck();
     if(condType != TypeSystem::boolType)
     {
-        cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
+        // cond = new ConvExpr(cond->getSymPtr(), TypeSystem::boolType, cond);
         BEG_BLUE;
         fprintf(stderr, "line:%d while - type %s mismatched, convert to bool\n", 
             lineno, condType->toStr().c_str());
