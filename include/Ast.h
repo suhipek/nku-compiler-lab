@@ -95,6 +95,7 @@ class Constant : public ExprNode
 public:
     Constant(SymbolEntry *se) : ExprNode(se){dst = new Operand(se);};
     void output(int level);
+    std::string getValue() {return symbolEntry->toStr();};
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
 };

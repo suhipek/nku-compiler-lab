@@ -66,6 +66,7 @@ void FunctionDef::genCode()
     {
         // 获取最后一条指令
         Instruction *lastInst = (*block)->rbegin();
+        
         // 如果最后一条指令是无条件跳转指令
         if(lastInst->isUncond())
         {
@@ -148,14 +149,20 @@ void BinaryExpr::genCode()
                 break;
         }
         new CmpInstruction(opcode, dst, src1, src2, bb);
+        BasicBlock *trueBB = new BasicBlock(func);
+        BasicBlock *falseBB = new BasicBlock(func);
+        BasicBlock *mergeBB = new BasicBlock(func);
+        true_list.push_back(new CondBrInstruction(trueBB, falseBB, dst, bb));
+        false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
     }
-    else if(op >= ADD && op <= SUB)
+    else if(op >= ADD && op <= MOD)
     {
         expr1->genCode();
         expr2->genCode();
         Operand *src1 = expr1->getOperand();
         Operand *src2 = expr2->getOperand();
         int opcode;
+        // ADD, SUB, MUL, DIV, MOD
         switch (op)
         {
         case ADD: 
@@ -164,6 +171,16 @@ void BinaryExpr::genCode()
         case SUB:
             opcode = BinaryInstruction::SUB;
             break;
+        case MUL:
+            opcode = BinaryInstruction::MUL;
+            break;
+        case DIV:
+            opcode = BinaryInstruction::DIV;
+            break;
+        case MOD:
+            opcode = BinaryInstruction::MOD;
+            break;
+
         }
         new BinaryInstruction(opcode, dst, src1, src2, bb);
     }
@@ -272,12 +289,23 @@ void DeclStmt::genCode()
         addr_se->setType(new PointerType(se->getType()));
         addr = new Operand(addr_se);
         se->setAddr(addr);
+        Unit *unit = builder->getUnit();
+        Constant *_initVal = dynamic_cast<Constant *>(expr);
+        if(_initVal)
+        {
+            unit->insertDecl(se, _initVal->getValue());
+        }
+        else
+        {
+            unit->insertDecl(se);
+        }
     }
     else if(se->isLocal())
     {
         Function *func = builder->getInsertBB()->getParent();
         BasicBlock *entry = func->getEntry();
         Instruction *alloca;
+        Instruction *assign;
         Operand *addr;
         SymbolEntry *addr_se;
         Type *type;
@@ -285,7 +313,9 @@ void DeclStmt::genCode()
         addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());
         addr = new Operand(addr_se);
         alloca = new AllocaInstruction(addr, se);                   // allocate space for local id in function stack.
+        // assign = new StoreInstruction(addr, new Operand(se), entry);// store the initial value of local id into the allocated space.
         entry->insertFront(alloca);                                 // allocate instructions should be inserted into the begin of the entry block.
+        // entry->insertFront(assign);
         se->setAddr(addr);                                          // set the addr operand in symbol entry so that we can use it in subsequent code generation.
     }
 }
