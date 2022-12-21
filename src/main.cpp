@@ -20,11 +20,10 @@ extern int yylineno;
 
 int main(int argc, char *argv[])
 {
-    // dump_tokens = dump_ast = false;
-    // yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
-    // yyparse();
-    // fclose(yyin);
-    // bug : function declare not finished
+    dump_tokens = dump_ast = false;
+    yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
+    yyparse();
+    fclose(yyin);
     yylineno = 1; // 重置行号
     int opt;
     while ((opt = getopt(argc, argv, "iato:")) != -1)

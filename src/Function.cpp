@@ -50,5 +50,7 @@ void Function::output() const
             }
         }
     }
+    // for(auto &bb:block_list)
+    //     bb->output();
     fprintf(yyout, "}\n");
 }

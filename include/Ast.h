@@ -63,6 +63,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr();
 };
 
 class UnaryExpr : public ExprNode
@@ -271,7 +272,11 @@ class CallExpr : public ExprNode
 protected:
     CallParams* params; // argument list
 public:
-    CallExpr(SymbolEntry *se, CallParams* params) : ExprNode(se), params(params){};
+    CallExpr(SymbolEntry *se, CallParams* params) : ExprNode(se), params(params){
+        dst = new Operand(new TemporarySymbolEntry(
+                ((FunctionType *)(symbolEntry->getType()))->getRetType(), 
+                SymbolTable::getLabel()));
+    }
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();

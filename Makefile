@@ -47,10 +47,10 @@ $(BINARY):$(OBJ)
 
 app:$(LEXER) $(PARSER) $(BINARY)
 
-run:app
-	@$(BINARY) -o example.ll -i example.sy
+run:clean app
+	@$(BINARY) -o example.ll -a -i example.sy
 
-gdb:app
+gdb:clean app
 	@gdb $(BINARY)
 
 $(OBJ_PATH)/lexer.o:$(SRC_PATH)/lexer.cpp
@@ -79,7 +79,7 @@ testlab5:clean app $(OUTPUT_LAB5)
 testlab6:clean app $(OUTPUT_LAB6)
 
 .ONESHELL:
-test:app
+test: clean app
 	@success=0
 	@for file in $(sort $(TESTCASE))
 	do

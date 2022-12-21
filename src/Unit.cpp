@@ -33,6 +33,18 @@ void Unit::output() const
             decl->getType()->toStr().c_str(),
             init_values[i].c_str());
     }
+    FILE *sylib = fopen("sysyruntimelibrary/sylib_def.ll", "r");
+    if(sylib != NULL)
+    {
+        char buf[1000] = {0};
+        fread(buf, 1, 1000, sylib);
+        fprintf(yyout, "\n%s\n\n", buf);
+    }
+    else
+    {
+        fprintf(stderr, "Cannot open sysyruntimelibrary/sylib_def.ll\n");
+        exit(1);
+    }
     for (auto &func : func_list)
         func->output();
 }

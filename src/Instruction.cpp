@@ -360,6 +360,15 @@ void CallInstruction::output() const
             func_params += ", ";
     }
 
-    fprintf(yyout, "  %s = call %s @%s(%s)\n", 
-        dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
+    Type* retType = ((FunctionType *)(se->getType()))->getRetType();
+    if(retType == TypeSystem::voidType)
+    {
+        fprintf(yyout, "  call %s %s(%s)\n", 
+            func_type.c_str(), func_name.c_str(), func_params.c_str());
+    }
+    else
+    {
+        fprintf(yyout, "  %s = call %s %s(%s)\n", 
+            dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
+    }
 }
