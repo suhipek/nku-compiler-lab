@@ -50,6 +50,7 @@ public:
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){dst = new Operand(symbolEntry);};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
+    virtual void genBr() = 0;
 };
 
 class BinaryExpr : public ExprNode
@@ -77,6 +78,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr();
 };
 
 class ConvExpr : public ExprNode
@@ -89,6 +91,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr(){}
 };
 
 class Constant : public ExprNode
@@ -99,6 +102,7 @@ public:
     std::string getValue() {return symbolEntry->toStr();};
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr(){}
 };
 
 class Id : public ExprNode
@@ -108,6 +112,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr(){}
 };
 
 class StmtNode : public Node
@@ -280,6 +285,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genBr(){}
 };
 
 class Ast

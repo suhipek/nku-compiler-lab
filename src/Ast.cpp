@@ -207,7 +207,8 @@ void BinaryExpr::genCode()
 
 void BinaryExpr::genBr()
 {
-
+    // if (op >= ADD && op <= MOD) // todo：隐式转换
+    this->genCode();
 }
 
 void UnaryExpr::genCode()
@@ -220,10 +221,12 @@ void UnaryExpr::genCode()
     
     if(op == NOT)
     {
+        dst = new Operand(new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel()));
         new CmpInstruction(CmpInstruction::E, dst, src, zero, bb);
     }
     else if(op == SUB)
     {
+        dst = new Operand(new TemporarySymbolEntry(src->getType(), SymbolTable::getLabel()));
         new BinaryInstruction(BinaryInstruction::SUB, dst, zero, src, bb);
     }
 
@@ -232,6 +235,20 @@ void UnaryExpr::genCode()
     // BasicBlock *mergeBB = new BasicBlock(func);
     // true_list.push_back(new CondBrInstruction(trueBB, falseBB, dst, bb));
     // false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
+}
+
+void UnaryExpr::genBr()
+{
+    this->genCode();
+
+    BasicBlock *bb = builder->getInsertBB();
+    Function *func = bb->getParent();
+    BasicBlock *trueBB = new BasicBlock(func);
+    BasicBlock *falseBB = new BasicBlock(func);
+    BasicBlock *mergeBB = new BasicBlock(func);
+
+    true_list.push_back(new CondBrInstruction(trueBB, falseBB, dst, bb));
+    false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
 }
 
 void CallExpr::genCode()
@@ -266,7 +283,7 @@ void IfStmt::genCode()
     BasicBlock *then_bb = new BasicBlock(func);
     BasicBlock *end_bb = new BasicBlock(func);
 
-    cond->genCode();
+    cond->genBr();
     backPatch(cond->trueList(), then_bb);
     backPatch(cond->falseList(), end_bb);
 
@@ -285,7 +302,7 @@ void IfElseStmt::genCode()
     BasicBlock *else_bb = new BasicBlock(func);
     BasicBlock *end_bb = new BasicBlock(func);
 
-    cond->genCode();
+    cond->genBr();
     backPatch(cond->trueList(), then_bb);
     backPatch(cond->falseList(), else_bb);
 
@@ -312,13 +329,13 @@ void WhileStmt::genCode()
     
     new UncondBrInstruction(cond_bb, origin_bb);
     builder->setInsertBB(cond_bb);
-    cond->genCode();
+    cond->genBr();
     backPatch(cond->trueList(), body_bb);
     backPatch(cond->falseList(), end_bb);
 
     builder->setInsertBB(body_bb);
     body->genCode();
-    new UncondBrInstruction(cond_bb, body_bb);
+    new UncondBrInstruction(cond_bb, builder->getInsertBB());
     backPatch(body->trueList(), cond_bb);
     backPatch(body->falseList(), end_bb);
 
