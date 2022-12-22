@@ -236,7 +236,7 @@ void UnaryExpr::genCode()
     else if(op == SUB)
     {
         dst = new Operand(new TemporarySymbolEntry(src->getType(), SymbolTable::getLabel()));
-        new BinaryInstruction(BinaryInstruction::SUB, dst, zero, src, bb);
+        new BinaryInstruction(BinaryInstruction::USUB, dst, zero, src, bb);
     }
 
     // BasicBlock *trueBB = new BasicBlock(func);

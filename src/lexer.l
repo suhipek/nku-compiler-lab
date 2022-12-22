@@ -198,25 +198,38 @@ commentelement [^\n]
 }
 
 {HEX} {
-    if(dump_tokens)
-        DEBUG_FOR_LAB4("HEX");
     stringstream conv;
+    uint32_t tmp;
     conv << hex << yytext;
-    conv >> yylval.itype;
+    conv >> tmp; 
+    yylval.itype = (int)tmp;
+    if(dump_tokens)
+    {
+        fprintf(stderr, "HEX: %s covert to %d\n", yytext, yylval.itype);
+        DEBUG_FOR_LAB4("HEX");
+    }
     return INTEGER;
 }
 {OCT} {
-    if(dump_tokens)
-        DEBUG_FOR_LAB4("OCT");
     stringstream conv;
-    conv << oct << yytext;
-    conv >> yylval.itype;
+    uint32_t tmp;
+    conv << hex << yytext;
+    conv >> tmp; 
+    yylval.itype = (int)tmp;
+    if(dump_tokens)
+    {
+        fprintf(stderr, "OCT: %s covert to %d\n", yytext, yylval.itype);
+        DEBUG_FOR_LAB4("OCT");
+    }
     return INTEGER;
 }
 {DECIMIAL} {
-    if(dump_tokens)
-        DEBUG_FOR_LAB4("DEC");
     yylval.itype = atoi(yytext);
+    if(dump_tokens)
+    {
+        fprintf(stderr, "DEC: %s covert to %d\n", yytext, yylval.itype);
+        DEBUG_FOR_LAB4("DEC");
+    }
     return INTEGER;
 }
 

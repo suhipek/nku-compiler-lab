@@ -96,6 +96,9 @@ void BinaryInstruction::output() const
     case MOD:
         op = "srem";
         break;
+    case USUB:
+        op = "sub nsw";
+        break;
     default:
         break;
     }

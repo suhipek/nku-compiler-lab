@@ -71,7 +71,7 @@ public:
     BinaryInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~BinaryInstruction();
     void output() const;
-    enum {SUB, ADD, MUL, DIV, MOD, AND, OR};
+    enum {SUB, ADD, MUL, DIV, MOD, AND, OR, USUB};
 };
 
 class CmpInstruction : public Instruction
