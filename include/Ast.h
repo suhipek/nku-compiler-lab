@@ -151,6 +151,9 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
+    void genCodeAsFuncArg(Operand* arg);
+    SymbolEntry *getSymPtr() {return id->getSymPtr();}
+
 };
 
 class IfStmt : public StmtNode

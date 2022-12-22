@@ -21,9 +21,10 @@ private:
     SymbolEntry *sym_ptr;
     BasicBlock *entry;
     Unit *parent;
+    std::vector<Operand*> params_list;
 
 public:
-    Function(Unit *, SymbolEntry *);
+    Function(Unit *, SymbolEntry *, std::vector<Operand*>);
     ~Function();
     void insertBlock(BasicBlock *bb) { block_list.push_back(bb); };
     BasicBlock *getEntry() { return entry; };

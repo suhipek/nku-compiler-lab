@@ -45,15 +45,24 @@ void Ast::genCode(Unit *unit)
 void FunctionDef::genCode()
 {
     Unit *unit = builder->getUnit();
-    Function *func = new Function(unit, se);
+    std::vector<DeclStmt*> formal_params = params->getDecls();
+    std::vector<Operand *> formal_params_op;
+    for(auto &param: formal_params)
+    {
+        TemporarySymbolEntry* temp_se = new TemporarySymbolEntry(
+            param->getSymPtr()->getType(), SymbolTable::getLabel());
+        formal_params_op.push_back(new Operand(temp_se));
+    }
+
+    Function *func = new Function(unit, se, formal_params_op);
     BasicBlock *entry = func->getEntry();
     // set the insert point to the entry basicblock of this function.
     builder->setInsertBB(entry);
 
-    std::vector<DeclStmt*> formal_params = params->getDecls();
-    for(auto &param: formal_params)
+    
+    for(int i = 0; i < (int)(formal_params.size()); i++)
     {
-        param->genCode(); // generate code for each formal parameter.
+        formal_params[i]->genCodeAsFuncArg(formal_params_op[i]); // generate code for each formal parameter.
     }
     stmt->genCode();
 
@@ -354,6 +363,26 @@ void SeqNode::genCode()
     stmt2->genCode();
 }
 
+void DeclStmt::genCodeAsFuncArg(Operand* arg)
+{
+    IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(id->getSymPtr());
+    Function *func = builder->getInsertBB()->getParent();
+    BasicBlock *entry = func->getEntry();
+    Instruction *alloca;
+    Operand *addr;
+    SymbolEntry *addr_se;
+    Type *type;
+    type = new PointerType(se->getType());
+    addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());
+    addr = new Operand(addr_se);
+
+    new StoreInstruction(addr, arg, entry);
+    alloca = new AllocaInstruction(addr, se);                   // allocate space for local id in function stack.
+    entry->insertFront(alloca);                                 // allocate instructions should be inserted into the begin of the entry block.
+    // entry->insertFront(assign);
+    se->setAddr(addr);                                          // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+}
+
 void DeclStmt::genCode()
 {
     IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(id->getSymPtr());
@@ -392,6 +421,12 @@ void DeclStmt::genCode()
         if(_initVal)
         {
             Operand *initVal = new Operand(_initVal->getSymPtr());
+            new StoreInstruction(addr, initVal, entry);
+        }
+        else if(expr)
+        {
+            expr->genCode();
+            Operand *initVal = expr->getOperand();
             new StoreInstruction(addr, initVal, entry);
         }
 
