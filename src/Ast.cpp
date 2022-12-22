@@ -188,7 +188,6 @@ void BinaryExpr::genCode()
                 src2 = converted;
             }
         }
-        SymbolEntry *temp_se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         dst = new Operand(new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel()));
 
         new CmpInstruction(opcode, dst, src1, src2, bb);
@@ -245,7 +244,6 @@ void UnaryExpr::genCode()
     BasicBlock *bb = builder->getInsertBB();
     Operand *src = expr->getOperand();
     Operand *zero = new Operand(new ConstantSymbolEntry(TypeSystem::constIntType, 0));
-    Function *func = bb->getParent();
     
     if(op == NOT)
     {
