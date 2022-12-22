@@ -375,3 +375,30 @@ void CallInstruction::output() const
             dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
     }
 }
+
+SextInstruction::SextInstruction(
+    Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb) : Instruction(SEXT, insert_bb)
+{
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->addUse(this);
+    src->addUse(this);
+    this->toType = toType;
+}
+
+SextInstruction::~SextInstruction()
+{
+    operands[0]->removeUse(this);
+    operands[1]->removeUse(this);
+}
+
+void SextInstruction::output() const
+{
+    std::string dst = operands[0]->toStr();
+    std::string src = operands[1]->toStr();
+    std::string dst_type = toType->toStr();
+    std::string src_type = operands[1]->getType()->toStr();
+
+    fprintf(yyout, "  %s = sext %s %s to %s\n", 
+        dst.c_str(), src_type.c_str(), src.c_str(), dst_type.c_str());
+}

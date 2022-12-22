@@ -28,7 +28,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -128,6 +128,16 @@ public:
 private:
     SymbolEntry *se;
     std::vector<Operand*> args;
+};
+
+class SextInstruction : public Instruction
+{
+public:
+    SextInstruction(Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb = nullptr);
+    ~SextInstruction();
+    void output() const;
+private:
+    Type *toType;
 };
 
 #endif

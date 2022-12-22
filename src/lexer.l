@@ -213,7 +213,7 @@ commentelement [^\n]
 {OCT} {
     stringstream conv;
     uint32_t tmp;
-    conv << hex << yytext;
+    conv << oct << yytext;
     conv >> tmp; 
     yylval.itype = (int)tmp;
     if(dump_tokens)

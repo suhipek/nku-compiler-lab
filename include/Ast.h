@@ -102,7 +102,10 @@ public:
     std::string getValue() {return symbolEntry->toStr();};
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
-    void genBr(){}
+    void genBr(){
+        fprintf(stderr, "Error: genBr() is called on a constant");
+        this->genCode();
+    }
 };
 
 class Id : public ExprNode
@@ -112,7 +115,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
-    void genBr(){}
+    void genBr();
 };
 
 class StmtNode : public Node
@@ -288,7 +291,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
-    void genBr(){}
+    void genBr();
 };
 
 class Ast
