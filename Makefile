@@ -1,7 +1,7 @@
 SRC_PATH ?= src
 INC_PATH += include
 BUILD_PATH ?= build
-TEST_PATH ?= test/level1-1
+TEST_PATH ?= test/level1-2
 OBJ_PATH ?= $(BUILD_PATH)/obj
 BINARY ?= $(BUILD_PATH)/compiler
 SYSLIB_PATH ?= sysyruntimelibrary
@@ -49,10 +49,18 @@ $(BINARY):$(OBJ)
 
 app:$(LEXER) $(PARSER) $(BINARY)
 
-run:app
+run:clean app
 	@$(BINARY) -o example.s -S example.sy
 
-gdb:app
+clbin:
+	@clang -x c example.sy sysyruntimelibrary/sylib.c -o example.cl.bin
+
+mybin:run
+	@clang example.ll sysyruntimelibrary/sylib.c -o example.my.bin
+
+bin:mybin clbin
+
+gdb:clean app
 	@gdb $(BINARY)
 
 $(OBJ_PATH)/lexer.o:$(SRC_PATH)/lexer.cpp
@@ -82,16 +90,16 @@ llvmir:$(LLVM_IR)
 
 gccasm:$(GCC_ASM)
 
-testlab4:app $(OUTPUT_LAB4)
+testlab4:clean app $(OUTPUT_LAB4)
 
-testlab5:app $(OUTPUT_LAB5)
+testlab5:clean app $(OUTPUT_LAB5)
 
-testlab6:app $(OUTPUT_LAB6)
+testlab6:clean app $(OUTPUT_LAB6)
 
-testlab7:app $(OUTPUT_LAB7)
+testlab7:clean app $(OUTPUT_LAB7)
 
 .ONESHELL:
-test:app
+test: clean app
 	@success=0
 	@for file in $(sort $(TESTCASE))
 	do

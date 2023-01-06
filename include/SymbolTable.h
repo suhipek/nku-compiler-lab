@@ -6,6 +6,8 @@
 
 class Type;
 class Operand;
+class StmtNode;
+class FunctionDef;
 
 class SymbolEntry
 {
@@ -79,8 +81,9 @@ private:
     int scope;
     Operand *addr;  // The address of the identifier.
     // You can add any field you need here.
-
+    
 public:
+    FunctionDef *reverse_func;
     IdentifierSymbolEntry(Type *type, std::string name, int scope);
     virtual ~IdentifierSymbolEntry() {};
     std::string toStr();

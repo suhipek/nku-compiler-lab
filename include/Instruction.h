@@ -37,7 +37,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -85,7 +85,7 @@ public:
     ~BinaryInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);
-    enum {SUB, ADD, AND, OR};
+    enum {SUB, ADD, MUL, DIV, MOD, AND, OR, USUB};
 };
 
 class CmpInstruction : public Instruction
@@ -135,6 +135,29 @@ public:
     ~RetInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);
+};
+
+class CallInstruction : public Instruction
+{
+public:
+    CallInstruction(Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb = nullptr);
+    ~CallInstruction();
+    void output() const;
+    void genMachineCode(AsmBuilder*);
+private:
+    SymbolEntry *se;
+    std::vector<Operand*> args;
+};
+
+class SextInstruction : public Instruction
+{
+public:
+    SextInstruction(Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb = nullptr);
+    ~SextInstruction();
+    void output() const;
+    void genMachineCode(AsmBuilder*);
+private:
+    Type *toType;
 };
 
 #endif

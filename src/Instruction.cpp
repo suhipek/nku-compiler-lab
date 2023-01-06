@@ -87,6 +87,18 @@ void BinaryInstruction::output() const
     case SUB:
         op = "sub";
         break;
+    case MUL:
+        op = "mul";
+        break;
+    case DIV:
+        op = "sdiv";
+        break;
+    case MOD:
+        op = "srem";
+        break;
+    case USUB:
+        op = "sub nsw";
+        break;
     default:
         break;
     }
@@ -465,4 +477,93 @@ void RetInstruction::genMachineCode(AsmBuilder* builder)
     * 1. Generate mov instruction to save return value in r0
     * 2. Restore callee saved registers and sp, fp
     * 3. Generate bx instruction */
+}
+
+
+CallInstruction::CallInstruction(
+    Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb) : Instruction(CALL, insert_bb)
+{
+    // todo: how to pass args and se as operands
+    operands.push_back(dst);
+    dst->addUse(this);
+    this->se = se;
+    for(auto it = args.begin(); it != args.end(); ++it)
+    {
+        operands.push_back(*it);
+        (*it)->addUse(this);
+    }
+}
+
+CallInstruction::~CallInstruction()
+{
+    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+        (*it)->removeUse(this);
+}
+
+void CallInstruction::output() const
+{
+    std::string dst = operands[0]->toStr();
+    std::string func_name = se->toStr(); // 记得加上 @
+    std::string func_type = se->getType()->toStr();
+    std::string func_params;
+    // Type *retType = ((FunctionType *)(se->getType()))->getRetType();
+
+    // 遍历转换参数列表
+    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+    {
+        std::string arg = (*it)->toStr();
+        std::string arg_type = (*it)->getType()->toStr();
+        func_params += arg_type + " " + arg;
+        if(it != operands.end() - 1)
+            func_params += ", ";
+    }
+
+    Type* retType = ((FunctionType *)(se->getType()))->getRetType();
+    if(retType == TypeSystem::voidType)
+    {
+        fprintf(yyout, "  call %s %s(%s)\n", 
+            func_type.c_str(), func_name.c_str(), func_params.c_str());
+    }
+    else
+    {
+        fprintf(yyout, "  %s = call %s %s(%s)\n", 
+            dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
+    }
+}
+
+SextInstruction::SextInstruction(
+    Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb) : Instruction(SEXT, insert_bb)
+{
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->addUse(this);
+    src->addUse(this);
+    this->toType = toType;
+}
+
+SextInstruction::~SextInstruction()
+{
+    operands[0]->removeUse(this);
+    operands[1]->removeUse(this);
+}
+
+void SextInstruction::output() const
+{
+    std::string dst = operands[0]->toStr();
+    std::string src = operands[1]->toStr();
+    std::string dst_type = toType->toStr();
+    std::string src_type = operands[1]->getType()->toStr();
+
+    fprintf(yyout, "  %s = sext %s %s to %s\n", 
+        dst.c_str(), src_type.c_str(), src.c_str(), dst_type.c_str());
+}
+
+void SextInstruction::genMachineCode(AsmBuilder* builder)
+{
+    // TODO
+}
+
+void CallInstruction::genMachineCode(AsmBuilder* builder)
+{
+    // TODO
 }

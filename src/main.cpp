@@ -20,9 +20,15 @@ bool dump_tokens;
 bool dump_ast;
 bool dump_ir;
 bool dump_asm;
+extern int yylineno;
 
 int main(int argc, char *argv[])
 {
+    dump_tokens = dump_ast = false;
+    yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
+    yyparse();
+    fclose(yyin);
+    yylineno = 1; // 重置行号
     int opt;
     while ((opt = getopt(argc, argv, "Siato:")) != -1)
     {
@@ -64,10 +70,12 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: fail to open output file\n", outfile);
         exit(EXIT_FAILURE);
     }
+    fprintf(stdout, "\n----------------------------------\n");
+    fprintf(stdout, "Processing %s \n", argv[optind]);
     yyparse();
+    ast.typeCheck();
     if(dump_ast)
         ast.output();
-    ast.typeCheck();
     ast.genCode(&unit);
     if(dump_ir)
         unit.output();

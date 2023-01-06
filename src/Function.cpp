@@ -5,8 +5,9 @@
 
 extern FILE* yyout;
 
-Function::Function(Unit *u, SymbolEntry *s)
+Function::Function(Unit *u, SymbolEntry *s, std::vector<Operand*> params_list)
 {
+    this->params_list = params_list;
     u->insertFunc(this);
     entry = new BasicBlock(this);
     sym_ptr = s;
@@ -15,10 +16,13 @@ Function::Function(Unit *u, SymbolEntry *s)
 
 Function::~Function()
 {
-    auto delete_list = block_list;
-    for (auto &i : delete_list)
-        delete i;
-    parent->removeFunc(this);
+    // SegFault :(
+    // auto delete_list = block_list;
+    // for (auto &i : block_list)
+    //     delete i;
+    // parent->removeFunc(this);
+    // 一个处理程序行数不到一百行的玩具编译器担心内存泄漏干啥
+    // 破案了，我连玩具编译器都写不出来，我是five
 }
 
 // remove the basicblock bb from its block_list.
@@ -31,7 +35,20 @@ void Function::output() const
 {
     FunctionType* funcType = dynamic_cast<FunctionType*>(sym_ptr->getType());
     Type *retType = funcType->getRetType();
-    fprintf(yyout, "define %s %s() {\n", retType->toStr().c_str(), sym_ptr->toStr().c_str());
+    std::string params_str;
+
+    for(auto &param:params_list)
+    {
+        params_str += param->getType()->toStr() + " " + param->toStr();
+        if(param != params_list.back())
+            params_str += ", ";
+    }
+
+    fprintf(yyout, "define %s %s(%s) {\n", 
+        retType->toStr().c_str(), 
+        sym_ptr->toStr().c_str(),
+        params_str.c_str());
+
     std::set<BasicBlock *> v;
     std::list<BasicBlock *> q;
     q.push_back(entry);
@@ -50,6 +67,10 @@ void Function::output() const
             }
         }
     }
+
+    // for(auto &bb:block_list)
+    //     bb->output();
+
     fprintf(yyout, "}\n");
 }
 
