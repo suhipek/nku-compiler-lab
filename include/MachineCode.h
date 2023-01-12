@@ -74,6 +74,7 @@ public:
     int getNo() {return no;};
     std::vector<MachineOperand*>& getDef() {return def_list;};
     std::vector<MachineOperand*>& getUse() {return use_list;};
+    MachineBlock* getParent(){ return parent; };
 };
 
 class BinaryMInstruction : public MachineInstruction
@@ -137,6 +138,7 @@ public:
 
 class StackMInstrcuton : public MachineInstruction
 {
+    // TODO：push和pop指令可有多个操作数 push {r1, r2}
 public:
     enum opType { PUSH, POP };
     StackMInstrcuton(MachineBlock* p, int op, 
@@ -154,10 +156,12 @@ private:
     std::vector<MachineInstruction*> inst_list;
     std::set<MachineOperand*> live_in;
     std::set<MachineOperand*> live_out;
+    int lastCond;
 public:
     std::vector<MachineInstruction*>& getInsts() {return inst_list;};
     std::vector<MachineInstruction*>::iterator begin() { return inst_list.begin(); };
     std::vector<MachineInstruction*>::iterator end() { return inst_list.end(); };
+    std::vector<MachineInstruction*>::reverse_iterator rbegin() { return inst_list.rbegin(); };
     MachineBlock(MachineFunction* p, int no) { this->parent = p; this->no = no; };
     void InsertInst(MachineInstruction* inst) { this->inst_list.push_back(inst); };
     void addPred(MachineBlock* p) { this->pred.push_back(p); };
@@ -166,6 +170,8 @@ public:
     std::set<MachineOperand*>& getLiveOut() {return live_out;};
     std::vector<MachineBlock*>& getPreds() {return pred;};
     std::vector<MachineBlock*>& getSuccs() {return succ;};
+    void setLastCond(int cond){lastCond = cond;}
+    int getLastCond(){return lastCond;}
     void output();
 };
 
