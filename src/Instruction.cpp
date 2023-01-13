@@ -321,7 +321,8 @@ void StoreInstruction::output() const
     std::string dst_type = operands[0]->getType()->toStr();
     std::string src_type = operands[1]->getType()->toStr();
 
-    fprintf(yyout, "  store %s %s, %s %s, align 4\n", src_type.c_str(), src.c_str(), dst_type.c_str(), dst.c_str());
+    fprintf(yyout, "  store %s %s, %s* %s, align 4\n", 
+        src_type.c_str(), src.c_str(), src_type.c_str(), dst.c_str());
 }
 
 
@@ -443,6 +444,6 @@ void GepInstruction::output() const
     }
 
     // %ptr = getelementptr i32, i32* %arr, i32 2, i32 3
-    fprintf(yyout, "  %s = getelementptr %s, %s %s, %s\n", 
+    fprintf(yyout, "  %s = getelementptr inbounds %s, %s %s, i32 0, %s\n", 
         dst.c_str(), ele_type.c_str(), arr_type.c_str(), arr.c_str(), gep_params.c_str());
 }

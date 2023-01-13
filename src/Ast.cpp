@@ -354,11 +354,32 @@ void Constant::genCode()
     // we don't need to generate code.
 }
 
-void Id::genCode()
+void Id::genCode(bool left)
 {
     BasicBlock *bb = builder->getInsertBB();
     Operand *addr = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getAddr();
-    new LoadInstruction(dst, addr, bb);
+    if(!arrayIndex)
+    {
+        new LoadInstruction(dst, addr, bb);
+        return;
+    }
+    std::vector<ExprNode*> params = arrayIndex->getParams();
+    std::vector<Operand*> offsets;
+    // 遍历下标，生成数组下标的代码，生成GEP指令
+    for(auto it:params)
+    {
+        it->genCode();
+        offsets.push_back(it->getOperand());
+    }
+    if(left)
+    {
+        new GepInstruction(dst, addr, offsets, bb);
+        return;
+    }
+    Type* ele_type = dynamic_cast<ArrayType*>(symbolEntry->getType())->getValueType();
+    Operand* tmp = new Operand(new TemporarySymbolEntry(new PointerType(ele_type), SymbolTable::getLabel()));
+    new GepInstruction(tmp, addr, offsets, bb);
+    new LoadInstruction(dst, tmp, bb);
 }
 
 void Id::genBr()
@@ -555,6 +576,12 @@ void AssignStmt::genCode()
      * We haven't implemented array yet, the lval can only be ID. So we just store the result of the `expr` to the addr of the id.
      * If you want to implement array, you have to caculate the address first and then store the result into it.
      */
+    if(((Id *)lval)->isArray())
+    {
+        ((Id *)lval)->genCode(true); // genCode as lVal
+        addr = lval->getOperand();
+    }
+    
     new StoreInstruction(addr, src, bb);
 }
 

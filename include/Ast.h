@@ -128,13 +128,16 @@ public:
     };
     Id(SymbolEntry *se, CallParams* arrayIndex) : ExprNode(se) , arrayIndex(arrayIndex)
     {
-        SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); 
+        Type* ele_type = dynamic_cast<ArrayType*>(se->getType())->getValueType();
+        SymbolEntry *temp = new TemporarySymbolEntry(ele_type, SymbolTable::getLabel()); 
         dst = new Operand(temp); 
     };
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
-    void genCode();
+    void genCode() {genCode(false);}
+    void genCode(bool left);
     void genBr();
+    bool isArray() {return arrayIndex != nullptr;};
     int getConstExpVal();
 };
 
