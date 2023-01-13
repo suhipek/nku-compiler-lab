@@ -59,6 +59,18 @@ public:
     std::string toStr();
 };
 
+class ArrayType : public Type
+{
+private:
+    Type *valueType;
+    int size;
+public:
+    ArrayType(Type* valueType, int size) : Type(Type::PTR), size(size) {this->valueType = valueType;};
+    Type* getValueType() {return valueType;};
+    int getSize() {return size;};
+    std::string toStr();
+};
+
 class ErrorType : public Type
 {
 public:

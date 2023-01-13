@@ -7,6 +7,7 @@
     int yylex();
     int yyerror( char const * );
     int yyget_lineno(void);
+    std::string getConstExpVal(ExprNode *exp);
     Type* nowType; // “最近”的类型，用于声明变量
 }
 
@@ -31,7 +32,6 @@
 %token <strtype> ID 
 %token <itype> INTEGER BOOL
 %token IF ELSE WHILE FOR
-%token HEX OCT
 %token INT VOID
 %token CONST
 %token COMMA
@@ -409,7 +409,13 @@ VarDef
     |
     ID ArrayIndices {
         SymbolEntry *se = identifiers->lookup($1);
-        se = new IdentifierSymbolEntry(new PointerType(nowType), $1, identifiers->getLevel());
+        std::vector<ExprNode*> indices = $2->getParams();
+        Type* type = nowType;
+        for(auto it = indices.rbegin(); it != indices.rend(); it++)
+        {
+            type = new ArrayType(type, (*it)->getConstExpVal());
+        }
+        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
         identifiers->install($1, se);
         $$ = new DeclStmt(new Id(se, $2));
         delete []$1;
@@ -449,6 +455,7 @@ ConstDef
         else
         {
             se = new IdentifierSymbolEntry(TypeSystem::getConstTypeOf(nowType), $1, identifiers->getLevel());
+            ((IdentifierSymbolEntry *)se)->constInit = $3;
             identifiers->install($1, se);
         }
         $$ = new DeclStmt(new Id(se), $3);

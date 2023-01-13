@@ -5,6 +5,7 @@
 #include "IRBuilder.h"
 #include <string>
 #include "Type.h"
+#include <cassert>
 
 extern FILE *yyout;
 int Node::counter = 0;
@@ -16,6 +17,44 @@ Node::Node()
     seq = counter++;
     lineno = yyget_lineno();
 }
+
+int BinaryExpr::getConstExpVal()
+{
+    // ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ
+    switch(op)
+    {
+    case ADD:
+        return expr1->getConstExpVal() + expr2->getConstExpVal();
+    case SUB:
+        return expr1->getConstExpVal() - expr2->getConstExpVal();
+    case MUL:
+        return expr1->getConstExpVal() * expr2->getConstExpVal();
+    case DIV:
+        return expr1->getConstExpVal() / expr2->getConstExpVal();
+    case MOD:
+        return expr1->getConstExpVal() % expr2->getConstExpVal();
+    }
+    assert(false); // 常量求值也就数组下标用，不会有其他的了
+}
+
+int UnaryExpr::getConstExpVal()
+{
+    assert(op == SUB);
+    return -(expr->getConstExpVal());
+}
+
+int Constant::getConstExpVal()
+{
+    return std::stoi(this->getValue());
+}
+
+int Id::getConstExpVal()
+{
+    auto constInitValue = ((IdentifierSymbolEntry*) symbolEntry)->constInit;
+    assert(constInitValue != nullptr); // not constant
+    return constInitValue->getConstExpVal();
+}
+
 
 void Node::backPatch(std::vector<Instruction*> &list, BasicBlock*bb)
 {

@@ -51,6 +51,7 @@ public:
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
     virtual void genBr() = 0;
+    virtual int getConstExpVal() = 0;
 };
 
 class BinaryExpr : public ExprNode
@@ -65,6 +66,7 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
+    int getConstExpVal();
 };
 
 class UnaryExpr : public ExprNode
@@ -79,6 +81,7 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
+    int getConstExpVal();
 };
 
 class ConvExpr : public ExprNode
@@ -92,6 +95,8 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr(){}
+    int getConstExpVal()
+        {fprintf(stderr, "Error: getConstExpVal() is called on a constant"); return -1;}
 };
 
 class Constant : public ExprNode
@@ -106,6 +111,7 @@ public:
         fprintf(stderr, "Error: genBr() is called on a constant");
         this->genCode();
     }
+    int getConstExpVal();
 };
 
 class CallParams;
@@ -115,13 +121,21 @@ private:
     CallParams *arrayIndex;
 public:
     Id(SymbolEntry *se) : ExprNode(se)
-        {SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    {
+        SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); 
+        dst = new Operand(temp); 
+        arrayIndex = nullptr;
+    };
     Id(SymbolEntry *se, CallParams* arrayIndex) : ExprNode(se) , arrayIndex(arrayIndex)
-        {SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    {
+        SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); 
+        dst = new Operand(temp); 
+    };
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
+    int getConstExpVal();
 };
 
 class StmtNode : public Node
@@ -283,6 +297,8 @@ public:
     Type* typeCheck(Type* retType=nullptr) {return nullptr;} // 不需要
     void genCode() {} // 不需要，话说当时就不该这么实现函数参数
     bool empty() {return params.empty();}
+    int size() {return params.size();}
+    std::vector<ExprNode*> getParams() {return params;}
     friend class CallExpr;
 };
 
@@ -300,6 +316,8 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
+    int getConstExpVal()
+        {fprintf(stderr, "Error: getConstExpVal() is called on a callexpr"); return -1;}
 };
 
 class Ast
