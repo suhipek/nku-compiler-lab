@@ -706,10 +706,61 @@ void SextInstruction::output() const
 
 void SextInstruction::genMachineCode(AsmBuilder* builder)
 {
-    // TODO
+    auto cur_block = builder->getBlock();
+    auto dst = genMachineOperand(operands[0]);
+    auto src = genMachineOperand(operands[1]);
+    auto cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src);
+    cur_block->InsertInst(cur_inst);
 }
 
 void CallInstruction::genMachineCode(AsmBuilder* builder)
 {
-    // TODO
+    // 在进行函数调用时，对于含参函数，需要使用 R0-R3 寄存器传递参数，如果参数个数大于四个还
+    // 需要生成 PUSH 指令来传递参数；之后生成跳转指令来进入 Callee 函数；在此之后，需要进行现场恢
+    // 复的工作，如果之前通过压栈的方式传递了参数，需要恢复 SP 寄存器；最后，如果函数执行结果被用
+    // 到，还需要保存 R0 寄存器中的返回值。
+    auto cur_block = builder->getBlock();
+    MachineInstruction *cur_inst;
+    // 第一个operand是dst，参数从第二个开始
+    // 前四个参数
+    for(auto it = operands.begin() + 1; 
+        it != operands.end() && it - operands.begin() <= 4; 
+        ++it)
+    {
+        auto op = genMachineReg(it - operands.begin() - 1);
+        auto src = genMachineOperand(*it);
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, op, src);
+        cur_block->InsertInst(cur_inst);
+    }
+    // 超出四个参数
+    for(auto it = operands.begin() + 5; it != operands.end(); ++it)
+    {
+        auto src = genMachineOperand(*it);
+        cur_inst = new StackMInstrcuton(cur_block, StackMInstrcuton::PUSH, src);
+        cur_block->InsertInst(cur_inst);
+    }
+
+    // 跳转
+    auto label = new MachineOperand(se->toStr());
+    cur_inst = new BranchMInstruction(cur_block, BranchMInstruction::BL, label);
+    cur_block->InsertInst(cur_inst);
+
+    // 现场恢复
+    if(operands.size() > 5)
+    {
+        auto offset = genMachineImm((operands.size() - 5) * 4);
+        auto sp = genMachineReg(13); // SP
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, sp, sp, offset);
+        cur_block->InsertInst(cur_inst);
+    }
+
+    // 保存返回值
+    Type* retType = ((FunctionType *)(se->getType()))->getRetType();
+    if(retType != TypeSystem::voidType)
+    {
+        auto dst = genMachineOperand(operands[0]);
+        auto src = genMachineReg(0); // R0
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src);
+        cur_block->InsertInst(cur_inst);
+    }
 }
