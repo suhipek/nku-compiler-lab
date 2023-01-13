@@ -108,10 +108,16 @@ public:
     }
 };
 
+class CallParams;
 class Id : public ExprNode
 {
+private:
+    CallParams *arrayIndex;
 public:
-    Id(SymbolEntry *se) : ExprNode(se){SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    Id(SymbolEntry *se) : ExprNode(se)
+        {SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    Id(SymbolEntry *se, CallParams* arrayIndex) : ExprNode(se) , arrayIndex(arrayIndex)
+        {SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
@@ -138,6 +144,7 @@ private:
     StmtNode *stmt1, *stmt2;
 public:
     SeqNode(StmtNode *stmt1, StmtNode *stmt2) : stmt1(stmt1), stmt2(stmt2){};
+    void setLeft(StmtNode *stmt) {stmt2 = stmt;};
     void output(int level);
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
@@ -275,6 +282,7 @@ public:
     void output(int level);
     Type* typeCheck(Type* retType=nullptr) {return nullptr;} // 不需要
     void genCode() {} // 不需要，话说当时就不该这么实现函数参数
+    bool empty() {return params.empty();}
     friend class CallExpr;
 };
 

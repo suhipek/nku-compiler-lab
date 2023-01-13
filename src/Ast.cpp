@@ -874,8 +874,10 @@ void Id::output(int level)
     name = symbolEntry->toStr();
     type = symbolEntry->getType()->toStr();
     scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_entry: %p\n", level, ' ',
-            name.c_str(), scope, type.c_str(), symbolEntry);
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_entry: %p\n", 
+            level, ' ', name.c_str(), scope, type.c_str(), symbolEntry);
+    if(arrayIndex && !arrayIndex->empty())
+        arrayIndex->output(level + 4);
 }
 
 void CompoundStmt::output(int level)
@@ -887,7 +889,7 @@ void CompoundStmt::output(int level)
 
 void SeqNode::output(int level)
 {
-    fprintf(yyout, "%*cSequence\n", level-2, ' ');
+    // fprintf(yyout, "%*cSequence\n", level-2, ' ');
     stmt1->output(level);
     stmt2->output(level);
 }

@@ -35,7 +35,7 @@
 %token INT VOID
 %token CONST
 %token COMMA
-%token LPAREN RPAREN LBRACE RBRACE SEMICOLON
+%token LPAREN RPAREN LBRACE RBRACE SEMICOLON LBRACKET RBRACKET
 %token ADD SUB OR AND STAR DIV MOD
 %token LESS GREATER EQ NEQ LEQ GEQ NOT
 %token ASSIGN
@@ -43,8 +43,8 @@
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef WhileStmt
 %nterm <stmttype> VarList ConstList VarDef ConstDef ExprStmt
-%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp MulExp
-%nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
+%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp MulExp 
+%nterm <callparamstype> CallParam ArrayIndices// 这么写是不是有点割裂。。。算了，先这样吧
 %nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
 %nterm <type> Type
 
@@ -83,6 +83,13 @@ LVal
                 TypeSystem::errorType, (std::string)"_undefined_"+$1, identifiers->getLevel());
         }
         $$ = new Id(se);
+        delete []$1;
+    }
+    |
+    ID ArrayIndices {
+        SymbolEntry *se;
+        se = identifiers->lookup($1);
+        $$ = new Id(se, $2);
         delete []$1;
     }
     ;
@@ -202,6 +209,16 @@ CallParam
         $$->append($1);
     }
     | CallParam COMMA Exp {
+        $$->append($3);
+    }
+    ;
+ArrayIndices  
+    // 数组可是多维
+    : LBRACKET AddExp RBRACKET {
+        $$ = new CallParams();
+        $$->append($2);
+    }
+    | ArrayIndices LBRACKET AddExp RBRACKET {
         $$->append($3);
     }
     ;
@@ -387,6 +404,14 @@ VarDef
             identifiers->install($1, se);
         }
         $$ = new DeclStmt(new Id(se), $3);
+        delete []$1;
+    }
+    |
+    ID ArrayIndices {
+        SymbolEntry *se = identifiers->lookup($1);
+        se = new IdentifierSymbolEntry(new PointerType(nowType), $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se, $2));
         delete []$1;
     }
     ;
