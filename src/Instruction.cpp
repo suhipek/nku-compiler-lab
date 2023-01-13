@@ -402,3 +402,47 @@ void SextInstruction::output() const
     fprintf(yyout, "  %s = sext %s %s to %s\n", 
         dst.c_str(), src_type.c_str(), src.c_str(), dst_type.c_str());
 }
+
+GepInstruction::GepInstruction(Operand *dst, Operand *src, std::vector<Operand*> &args, BasicBlock *insert_bb)
+    : Instruction(GEP, insert_bb)
+{
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->addUse(this);
+    src->addUse(this);
+    for(auto it = args.begin(); it != args.end(); ++it)
+    {
+        operands.push_back(*it);
+        (*it)->addUse(this);
+    }
+}
+
+GepInstruction::~GepInstruction()
+{
+    operands[0]->removeUse(this);
+    operands[1]->removeUse(this);
+    for(auto it = operands.begin() + 2; it != operands.end(); ++it)
+        (*it)->removeUse(this);
+}
+
+void GepInstruction::output() const
+{
+    std::string dst = operands[0]->toStr();
+    std::string arr = operands[1]->toStr();
+    std::string dst_type = operands[0]->getType()->toStr();
+    std::string arr_type = operands[1]->getType()->toStr();
+    std::string ele_type = ((PointerType *)(operands[1]->getType()))->getValueType()->toStr();
+    std::string gep_params;
+    for(auto it = operands.begin() + 2; it != operands.end(); ++it)
+    {
+        std::string arg = (*it)->toStr();
+        std::string arg_type = (*it)->getType()->toStr();
+        gep_params += arg_type + " " + arg;
+        if(it != operands.end() - 1)
+            gep_params += ", ";
+    }
+
+    // %ptr = getelementptr i32, i32* %arr, i32 2, i32 3
+    fprintf(yyout, "  %s = getelementptr %s, %s %s, %s\n", 
+        dst.c_str(), ele_type.c_str(), arr_type.c_str(), arr.c_str(), gep_params.c_str());
+}

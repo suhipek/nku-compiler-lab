@@ -28,7 +28,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT, GEP};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -138,6 +138,16 @@ public:
     void output() const;
 private:
     Type *toType;
+};
+
+class GepInstruction : public Instruction
+{
+public:
+    GepInstruction(Operand *dst, Operand *src, std::vector<Operand*> &args, BasicBlock *insert_bb = nullptr);
+    ~GepInstruction();
+    void output() const;
+private:
+    std::vector<Operand*> args;
 };
 
 #endif
