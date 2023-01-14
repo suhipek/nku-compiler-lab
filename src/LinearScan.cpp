@@ -162,7 +162,42 @@ void LinearScan::computeLiveIntervals()
 bool LinearScan::linearScanRegisterAllocation()
 {
     // Todo
+    // 现在开始遍历 intervals 列表进行寄存器分配，这一步需要大家完善 linearScanRegisterAllocation()
+    // 函数。对任意一个 unhandled interval 都进行如下的处理：
+    // 1. 遍历 active 列表，看该列表中是否存在结束时间早于 unhandled interval 的 interval（即与当前
+    // unhandled interval 的活跃区间不冲突），若有，则说明此时为其分配的物理寄存器可以回收，可
+    // 以用于后续的分配，需要将其在 active 列表删除；
+    // 2. 判断 active 列表中 interval 的数目和可用的物理寄存器数目是否相等，
+    // (a) 若相等，则说明当前所有物理寄存器都被占用，需要进行寄存器溢出操作。具体为在 active
+    // 列表中最后一个 interval 和当前 unhandled interval 中选择一个 interval 将其溢出到栈中，
+    // 选择策略就是看谁的活跃区间结束时间更晚，如果是 unhandled interval 的结束时间更晚，
+    // 只需要置位其 spill 标志位即可，如果是 active 列表中的 interval 结束时间更晚，需要置位
+    // 其 spill 标志位，并将其占用的寄存器分配给 unhandled interval，再按照 unhandled interval
+    // 活跃区间结束位置，将其插入到 active 列表中。
+    // (b) 若不相等，则说明当前有可用于分配的物理寄存器，为 unhandled interval 分配物理寄存器
+    // 之后，再按照活跃区间结束位置，将其插入到 active 列表中即可。
+    bool success = true;
+    active.clear();
+    regs.clear();
+    for(int i = 4; i <= 10; i--)
+        regs.push_back(i);
+    for(auto &interval:intervals)
+    {
+        expireOldIntervals(interval); // 回收寄存器（1）
 
+        if(regs.empty())
+        {
+            // 溢出寄存器（2a）
+            spillAtInterval(interval);
+            success = false;
+        }
+        else
+        {
+            interval->rreg = regs.back(); // 分配寄存器
+            regs.pop_back(); // 从可用寄存器列表中删除
+            active.push_back(std::move(interval)); // 将 interval 插入到 active 列表中
+        }
+    }
     return true;
 }
 
