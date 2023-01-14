@@ -428,3 +428,11 @@ void MachineUnit::output()
     for(auto iter : func_list)
         iter->output();
 }
+
+// 写这个作业我是真的难蚌好吧，那么多类定义看得脑子都要爆了，Ctrl+Shift+F10都要按爆了
+// 一个人写4000行代码？虽然Copilot挺好用的，但是到这个项目就傻了，人工智能都要投诉啊，工作量真的多
+// 我一个辅修学生，一学期32.5学分，九门考试课，我只能说是麻中麻
+// 还是说我会错意了，这个作业该用特殊的完成方式？？？
+// https://buaa-se-compiling.github.io/miniSysY-tutorial/challenge/functionInline/task.html
+// 北航着作业属实有点友好了，NK你作业是真的多啊，这回看他文档卷个自动内联吧
+// 85,我的85,为了我的3.7，给个85吧
