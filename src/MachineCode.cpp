@@ -1,4 +1,5 @@
 #include "MachineCode.h"
+#include "Type.h"
 extern FILE* yyout;
 
 MachineOperand::MachineOperand(int tp, int val)
@@ -359,6 +360,21 @@ StackMInstrcuton::StackMInstrcuton(MachineBlock* p, int op,
     src->setParent(this);
 }
 
+StackMInstrcuton::StackMInstrcuton(MachineBlock* p, int op, 
+                std::vector<MachineOperand*> src,
+                int cond)
+{
+    this->parent = p;
+    this->type = MachineInstruction::STACK;
+    this->op = op;
+    this->cond = cond;
+    for(auto iter : src)
+    {
+        this->use_list.push_back(iter);
+        iter->setParent(this);
+    }
+}
+
 void StackMInstrcuton::output()
 {
     // opType { PUSH, POP };
@@ -372,7 +388,18 @@ void StackMInstrcuton::output()
         break;
     }
 
-    this->use_list[0]->output();
+    // this->use_list[0]->output();
+    if(this->use_list.size() > 1)
+        fprintf(yyout, "{");
+    for(auto iter = this->use_list.begin(); iter != this->use_list.end(); iter++)
+    {
+        (*iter)->output();
+        if(std::next(iter) != this->use_list.end()) 
+            fprintf(yyout, ", ");
+    }
+    if(this->use_list.size() > 1)
+        fprintf(yyout, "}");
+
     fprintf(yyout, "\n");
 }
 
@@ -402,7 +429,37 @@ void MachineFunction::output()
     *  2. fp = sp
     *  3. Save callee saved register
     *  4. Allocate stack space for local variable */
-    
+    auto fp = new MachineOperand(MachineOperand::REG, 11);
+    auto sp = new MachineOperand(MachineOperand::REG, 13);
+    auto lr = new MachineOperand(MachineOperand::REG, 14);
+    std::vector<MachineOperand *> saved_regs_vec;
+    for(auto &iter : saved_regs)
+    {
+        auto reg = new MachineOperand(MachineOperand::REG, iter);
+        saved_regs_vec.push_back(reg);
+    }
+    saved_regs_vec.push_back(fp);
+    saved_regs_vec.push_back(lr);
+
+    // save regs
+    MachineInstruction* cur_inst = new StackMInstrcuton(nullptr, StackMInstrcuton::PUSH, saved_regs_vec);
+    cur_inst->output();
+
+    // fp = sp
+    cur_inst = new MovMInstruction(nullptr, MovMInstruction::MOV, fp, sp);
+    cur_inst->output();
+
+    // allocate stack space
+    int size = this->stack_size;
+    auto size_op = new MachineOperand(MachineOperand::IMM, size);
+    if (size < -255 || size > 255) {
+        auto r4 = new MachineOperand(MachineOperand::REG, 4);
+        cur_inst = new LoadMInstruction(nullptr, r4, size_op);
+        cur_inst->output();
+        size_op = r4;
+    } 
+    cur_inst = new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, size_op);
+
     // Traverse all the block in block_list to print assembly code.
     for(auto iter : block_list)
         iter->output();
@@ -412,6 +469,21 @@ void MachineUnit::PrintGlobalDecl()
 {
     // TODO:
     // You need to print global variable/const declarition code;
+
+    if (!global_list.empty()) {
+        fprintf(yyout, "\t.data\n");
+    }
+
+    for(auto global_decl: global_list)
+    {
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global_decl;
+        fprintf(yyout, "\t.global %s\n", se->toStr().c_str());
+        fprintf(yyout, "\t.align 4\n");
+        fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->getSize() / 8);
+        fprintf(yyout, "%s:\n", se->toStr().c_str());
+        fprintf(yyout, "\t.word %d\n", 0); // TODO: init value and array, wait for merge
+    }
+
 }
 
 void MachineUnit::output()
@@ -425,6 +497,13 @@ void MachineUnit::output()
     fprintf(yyout, "\t.arch_extension crc\n");
     fprintf(yyout, "\t.arm\n");
     PrintGlobalDecl();
+    fprintf(yyout, "\t.text\n");
     for(auto iter : func_list)
         iter->output();
+    for (auto iter = global_list.begin(); iter != global_list.end(); iter++)
+    {
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)*iter;
+        fprintf(yyout, "addr_%s%d:\n", se->toStr().c_str(), (int)(iter - global_list.begin()));
+        fprintf(yyout, "\t.word %s\n", se->toStr().c_str());
+    }
 }

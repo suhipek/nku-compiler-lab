@@ -10,6 +10,7 @@ private:
     bool isConstType;
 protected:
     enum {INT, VOID, FUNC, PTR};
+    int size;
 public:
     Type(int kind, bool _isConst = false) : kind(kind), isConstType(_isConst) {};
     virtual ~Type() {};
@@ -18,14 +19,13 @@ public:
     bool isVoid() const {return kind == VOID;};
     bool isFunc() const {return kind == FUNC;};
     bool isConst() const {return isConstType;};
+    int getSize() const {return size;};
 };
 
 class IntType : public Type
 {
-private:
-    int size;
 public:
-    IntType(int size, bool isConst = false) : Type(Type::INT, isConst), size(size){};
+    IntType(int size, bool isConst = false) : Type(Type::INT, isConst) {this->size = size;};
     std::string toStr();
 };
 

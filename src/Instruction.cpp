@@ -515,7 +515,6 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::MUL, internal_reg, dst, src2);
         cur_block->InsertInst(cur_inst);
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::SUB, dst, src1, internal_reg);
-    default:
         break;
     }
     cur_block->InsertInst(cur_inst);
@@ -724,7 +723,7 @@ void CallInstruction::genMachineCode(AsmBuilder* builder)
     // 第一个operand是dst，参数从第二个开始
     // 前四个参数
     for(auto it = operands.begin() + 1; 
-        it != operands.end() && it - operands.begin() <= 4; 
+        it < operands.end(); 
         ++it)
     {
         auto op = genMachineReg(it - operands.begin() - 1);
@@ -733,7 +732,9 @@ void CallInstruction::genMachineCode(AsmBuilder* builder)
         cur_block->InsertInst(cur_inst);
     }
     // 超出四个参数
-    for(auto it = operands.begin() + 5; it != operands.end(); ++it)
+    for(auto it = operands.begin() + 5; 
+        it < operands.end(); 
+        ++it)
     {
         auto src = genMachineOperand(*it);
         cur_inst = new StackMInstrcuton(cur_block, StackMInstrcuton::PUSH, src);

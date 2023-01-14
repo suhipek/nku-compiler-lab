@@ -144,6 +144,9 @@ public:
     StackMInstrcuton(MachineBlock* p, int op, 
                 MachineOperand* src,
                 int cond = MachineInstruction::NONE);
+    StackMInstrcuton(MachineBlock* p, int op, 
+                std::vector<MachineOperand*> src,
+                int cond = MachineInstruction::NONE);
     void output();
 };
 
@@ -193,7 +196,7 @@ public:
     * return current frame offset ;
     * we store offset in symbol entry of this variable in function AllocInstruction::genMachineCode()
     * you can use this function in LinearScan::genSpillCode() */
-    int AllocSpace(int size) { this->stack_size += size; return this->stack_size; };
+    int AllocSpace(int size = 0) { this->stack_size += size; return this->stack_size; };
     void InsertBlock(MachineBlock* block) { this->block_list.push_back(block); };
     void addSavedRegs(int regno) {saved_regs.insert(regno);};
     void output();
@@ -203,12 +206,14 @@ class MachineUnit
 {
 private:
     std::vector<MachineFunction*> func_list;
+    std::vector<SymbolEntry*> global_list;
     void PrintGlobalDecl();
 public:
     std::vector<MachineFunction*>& getFuncs() {return func_list;};
     std::vector<MachineFunction*>::iterator begin() { return func_list.begin(); };
     std::vector<MachineFunction*>::iterator end() { return func_list.end(); };
     void InsertFunc(MachineFunction* func) { func_list.push_back(func);};
+    void InsertGlobalDecl(SymbolEntry* symbolEntry) {global_list.push_back(symbolEntry);};
     void output();
 };
 
