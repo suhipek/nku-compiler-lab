@@ -242,3 +242,6 @@ bool LinearScan::compareStart(Interval *a, Interval *b)
 {
     return a->start < b->start;
 }
+
+// Question: What's best version control tool?
+// Answer: WeChat

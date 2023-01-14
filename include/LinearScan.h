@@ -46,4 +46,13 @@ public:
     void allocateRegisters();
 };
 
+// Question: How long does it take to learn Git?
+// Answer: One day. Which day? Every day.
+// 我问老师说，我有多久时间学会Git?
+// 老师说：只能四天！ 我说:好,春天、夏天、秋天、冬天。
+// 老师说：三天。 我说：好，昨天、今天、明天。 
+// 老师说：不行，两天。 我说：好，白天、黑天。 
+// 老师说：不行，就一天！ 我说：好！ 
+// 老师茫然问到：哪一天？ 我说：每一天！！
+
 #endif
