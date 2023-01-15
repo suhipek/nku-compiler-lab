@@ -457,6 +457,7 @@ void DeclStmt::genCode()
         else
         {
             unit->insertDecl(se);
+            mUnit.InsertGlobalDecl(se);
         }
     }
     else if(se->isLocal())

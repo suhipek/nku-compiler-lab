@@ -157,7 +157,7 @@ void BinaryMInstruction::output()
         fprintf(yyout, "\tmul ");
         break;
     case BinaryMInstruction::DIV:
-        fprintf(yyout, "\tdiv ");
+        fprintf(yyout, "\tsdiv ");
         break;
     case BinaryMInstruction::AND:
         fprintf(yyout, "\tand ");
