@@ -540,7 +540,9 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::DIV, dst, src1, src2);
         cur_block->InsertInst(cur_inst);
         // dst = src1 - dst * src2
-        MachineOperand* internal_reg = new MachineOperand(*dst);
+        // MachineOperand* internal_reg = new MachineOperand(*dst);
+        // 非常奇怪的bug：mul v2, v2, v5会被分配为mul r8, r9, r9
+        MachineOperand* internal_reg = genMachineVReg();
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::MUL, internal_reg, dst, src2);
         cur_block->InsertInst(cur_inst);
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::SUB, dst, src1, internal_reg);

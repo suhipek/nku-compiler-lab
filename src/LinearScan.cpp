@@ -187,8 +187,8 @@ bool LinearScan::linearScanRegisterAllocation()
         regs.push_back(i);
     for(auto &interval:intervals)
     {
-        expireOldIntervals(interval); // 回收寄存器（1）
-
+        // expireOldIntervals(interval); // 回收寄存器（1）
+        // 非常奇怪的bug：mul v2, v2, v5会被分配为mul r8, r9, r9
         if(regs.empty())
         {
             // 溢出寄存器（2a）
@@ -197,13 +197,14 @@ bool LinearScan::linearScanRegisterAllocation()
         }
         else
         {
-            // fprintf(stderr, "linearScanRegisterAllocation: assigning register %d to interval %d\n", regs.back(), interval->rreg);
+            fprintf(stderr, "linearScanRegisterAllocation: assigning register %d to interval %d\n", regs.back(), interval->rreg);
             interval->rreg = regs.back(); // 分配寄存器
             regs.pop_back(); // 从可用寄存器列表中删除
             active.push_back(std::move(interval)); // 将 interval 插入到 active 列表中
             // 按照活跃区间结束位置排序，使用lambda
             sort(active.begin(), active.end(), [](Interval* a, Interval* b) {return a->end < b->end;}); 
         }
+        expireOldIntervals(interval); // 回收寄存器（1）
     }
     return success;
 }
@@ -281,6 +282,7 @@ void LinearScan::expireOldIntervals(Interval *interval)
     {
         if ((*iter)->end >= interval->start)
             return; // active按照end升序，头部大于，回收不了
+        fprintf(stderr, "expireOldIntervals: recyling register %d\n", (*iter)->rreg);
         regs.push_back((*iter)->rreg);
         iter = active.erase(find(active.begin(), active.end(), *iter));
         sort(regs.begin(), regs.end());
