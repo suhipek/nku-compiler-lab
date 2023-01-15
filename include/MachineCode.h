@@ -72,9 +72,12 @@ public:
     virtual void output() = 0;
     void setNo(int no) {this->no = no;};
     int getNo() {return no;};
+    int getOp() {return op;};
     std::vector<MachineOperand*>& getDef() {return def_list;};
     std::vector<MachineOperand*>& getUse() {return use_list;};
     MachineBlock* getParent(){ return parent; };
+    void insertBefore(MachineInstruction*);   // 插入指令
+    void insertAfter(MachineInstruction*);
 };
 
 class BinaryMInstruction : public MachineInstruction
@@ -199,6 +202,7 @@ public:
     int AllocSpace(int size = 0) { this->stack_size += size; return this->stack_size; };
     void InsertBlock(MachineBlock* block) { this->block_list.push_back(block); };
     void addSavedRegs(int regno) {saved_regs.insert(regno);};
+    std::vector<MachineOperand *> getSavedRegs();
     void output();
 };
 

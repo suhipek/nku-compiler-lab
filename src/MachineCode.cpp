@@ -86,6 +86,8 @@ void MachineOperand::output()
     case LABEL:
         if (this->label.substr(0, 2) == ".L")
             fprintf(yyout, "%s", this->label.c_str());
+        else if(this->label[0] == '@')
+            fprintf(yyout, "%s", this->label.substr(1).c_str());
         else
             fprintf(yyout, "addr_%s", this->label.c_str());
     default:
@@ -414,7 +416,33 @@ void MachineBlock::output()
 {
     fprintf(yyout, ".L%d:\n", this->no);
     for(auto iter : inst_list)
+    {  
+        MachineInstruction *iter_br = dynamic_cast<BranchMInstruction*>(iter);
+        if(iter_br && iter_br->getOp() == BranchMInstruction::BX)
+        {
+            MachineInstruction* cur_inst = 
+                new StackMInstrcuton(nullptr, StackMInstrcuton::POP, 
+                    this->parent->getSavedRegs());
+            cur_inst->output();
+        }
         iter->output();
+    }
+}
+
+std::vector<MachineOperand *> MachineFunction::getSavedRegs()
+{
+    auto fp = new MachineOperand(MachineOperand::REG, 11);
+    // auto sp = new MachineOperand(MachineOperand::REG, 13);
+    auto lr = new MachineOperand(MachineOperand::REG, 14);
+    std::vector<MachineOperand *> saved_regs_vec;
+    for(auto &iter : saved_regs)
+    {
+        auto reg = new MachineOperand(MachineOperand::REG, iter);
+        saved_regs_vec.push_back(reg);
+    }
+    saved_regs_vec.push_back(fp);
+    saved_regs_vec.push_back(lr);
+    return saved_regs_vec;
 }
 
 void MachineFunction::output()
@@ -431,18 +459,11 @@ void MachineFunction::output()
     *  4. Allocate stack space for local variable */
     auto fp = new MachineOperand(MachineOperand::REG, 11);
     auto sp = new MachineOperand(MachineOperand::REG, 13);
-    auto lr = new MachineOperand(MachineOperand::REG, 14);
-    std::vector<MachineOperand *> saved_regs_vec;
-    for(auto &iter : saved_regs)
-    {
-        auto reg = new MachineOperand(MachineOperand::REG, iter);
-        saved_regs_vec.push_back(reg);
-    }
-    saved_regs_vec.push_back(fp);
-    saved_regs_vec.push_back(lr);
+    // auto lr = new MachineOperand(MachineOperand::REG, 14);
+
 
     // save regs
-    MachineInstruction* cur_inst = new StackMInstrcuton(nullptr, StackMInstrcuton::PUSH, saved_regs_vec);
+    MachineInstruction* cur_inst = new StackMInstrcuton(nullptr, StackMInstrcuton::PUSH, getSavedRegs());
     cur_inst->output();
 
     // fp = sp
@@ -459,7 +480,7 @@ void MachineFunction::output()
         size_op = r4;
     } 
     cur_inst = new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, size_op);
-
+    cur_inst->output();
     // Traverse all the block in block_list to print assembly code.
     for(auto iter : block_list)
         iter->output();
@@ -506,6 +527,20 @@ void MachineUnit::output()
         fprintf(yyout, "addr_%s%d:\n", se->toStr().c_str(), (int)(iter - global_list.begin()));
         fprintf(yyout, "\t.word %s\n", se->toStr().c_str());
     }
+}
+
+void MachineInstruction::insertBefore(MachineInstruction* inst)
+{
+    auto& instructions = parent->getInsts();
+    auto it = std::find(instructions.begin(), instructions.end(), this);
+    instructions.insert(it, inst);
+}
+
+void MachineInstruction::insertAfter(MachineInstruction* inst)
+{
+    auto& instructions = parent->getInsts();
+    auto it = std::find(instructions.begin(), instructions.end(), this);
+    instructions.insert(++it, inst);
 }
 
 // 真心累了

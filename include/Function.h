@@ -38,6 +38,7 @@ public:
     reverse_iterator rend() { return block_list.rend(); };
     SymbolEntry *getSymPtr() { return sym_ptr; };
     void genMachineCode(AsmBuilder*);
+    std::vector<Operand*> getParamsList() {return params_list;};
 };
 
 #endif

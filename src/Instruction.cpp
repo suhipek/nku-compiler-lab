@@ -337,8 +337,19 @@ MachineOperand* Instruction::genMachineOperand(Operand* ope)
         auto id_se = dynamic_cast<IdentifierSymbolEntry*>(se);
         if(id_se->isGlobal())
             mope = new MachineOperand(id_se->toStr().c_str());
-        else
-            exit(0);
+        else if (id_se->isParam()) {
+            // 参数个数小于4和大于4的情况     
+            std::vector<Operand *> paramList = this->getParent()->getParent()->getParamsList();
+            int paramNo = 0;
+            for(paramNo = 0; paramNo < (int)(paramList.size()); paramNo++)
+            {
+                auto param_se = paramList[paramNo]->getEntry();
+                if(param_se == id_se)
+                    break;
+            }
+            //参数大于4个，放到r3中截止
+            mope = new MachineOperand(MachineOperand::REG, paramNo < 4 ? paramNo : 3);
+        } 
     }
     return mope;
 }
@@ -445,8 +456,8 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
             && operands[0]->getDef()->isAlloc())
     {
         // example: store r1, [r0, #4]
-        auto dst = genMachineOperand(operands[0]);
-        auto src = genMachineOperand(operands[1]);
+        auto dst = genMachineOperand(operands[1]);
+        auto src = genMachineReg(11); // fp
         auto offset = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset());
         // TODO：此处offset最大为255，如果超出需要临时寄存器转换
         cur_inst = new StoreMInstruction(cur_block, dst, src, offset);

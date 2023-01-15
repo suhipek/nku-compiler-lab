@@ -49,9 +49,7 @@ void FunctionDef::genCode()
     std::vector<Operand *> formal_params_op;
     for(auto &param: formal_params)
     {
-        TemporarySymbolEntry* temp_se = new TemporarySymbolEntry(
-            param->getSymPtr()->getType(), SymbolTable::getLabel());
-        formal_params_op.push_back(new Operand(temp_se));
+        formal_params_op.push_back(new Operand(param->getSymPtr()));
     }
 
     Function *func = new Function(unit, se, formal_params_op);
