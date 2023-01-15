@@ -20,17 +20,18 @@ bool dump_tokens;
 bool dump_ast;
 bool dump_ir;
 bool dump_asm;
+bool dump_unalloc;
 extern int yylineno;
 
 int main(int argc, char *argv[])
 {
-    dump_tokens = dump_ast = false;
+    dump_tokens = dump_ast = dump_unalloc = false;
     yyin = fopen("sysyruntimelibrary/sylib_def.h", "r"); // 链接sysy运行库
     yyparse();
     fclose(yyin);
     yylineno = 1; // 重置行号
     int opt;
-    while ((opt = getopt(argc, argv, "Siato:")) != -1)
+    while ((opt = getopt(argc, argv, "Siatuo:")) != -1)
     {
         switch (opt)
         {
@@ -48,6 +49,9 @@ int main(int argc, char *argv[])
             break;
         case 'S':
             dump_asm = true;
+            break;
+        case 'u':
+            dump_unalloc = true;
             break;
         default:
             fprintf(stderr, "Usage: %s [-o outfile] infile\n", argv[0]);
@@ -80,7 +84,8 @@ int main(int argc, char *argv[])
     if(dump_ir)
         unit.output();
     unit.genMachineCode(&mUnit);
-    // mUnit.output();
+    if (dump_unalloc)
+        mUnit.output();
     LinearScan linearScan(&mUnit);
     linearScan.allocateRegisters();
     if(dump_asm)

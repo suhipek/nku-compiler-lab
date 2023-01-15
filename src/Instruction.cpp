@@ -589,19 +589,17 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
     cur_inst = new CmpMInstruction(cur_block, src1, src2, opcode);
     cur_block->InsertInst(cur_inst);
 
-    // EQ, NE, LT, LE , GT, GE, NONE
-    if(opcode >= CmpMInstruction::LT && opcode <= CmpMInstruction::GE)
-    {
-        auto trueOpe = genMachineImm(1);
-        auto falseOpe = genMachineImm(0);
-        // 通过使用movlt、movge等指令进行条件执行
-        // 如果结果为真就将dst设置为1，否则设置为0
-        // 所以opcode做cond，会被printCond函数输出为movlt等
-        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,trueOpe, opcode);
-        cur_block->InsertInst(cur_inst);
-        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOpe, 7 - opcode);
-        cur_block->InsertInst(cur_inst);
-    }
+    // EQ, LT, LE , GT, GE, NE NONE
+    // 相反的操作数加起来总是5，因此5-opcode就是相反的操作数
+    auto trueOpe = genMachineImm(1);
+    auto falseOpe = genMachineImm(0);
+    // 通过使用movlt、movge等指令进行条件执行
+    // 如果结果为真就将dst设置为1，否则设置为0
+    // 所以opcode做cond，会被printCond函数输出为movlt等
+    cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,trueOpe, opcode);
+    cur_block->InsertInst(cur_inst);
+    cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOpe, 5 - opcode);
+    cur_block->InsertInst(cur_inst);
 }
 
 void UncondBrInstruction::genMachineCode(AsmBuilder* builder)
