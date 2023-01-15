@@ -10,6 +10,7 @@ extern FILE *yyout;
 int Node::counter = 0;
 IRBuilder* Node::builder = nullptr;
 int yyget_lineno(void);
+extern MachineUnit mUnit;
 
 Node::Node()
 {
@@ -451,6 +452,7 @@ void DeclStmt::genCode()
         if(_initVal)
         {
             unit->insertDecl(se, _initVal->getValue());
+            mUnit.InsertGlobalDecl(se, _initVal->getValue());   
         }
         else
         {

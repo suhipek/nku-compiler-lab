@@ -1,6 +1,7 @@
 #include "MachineCode.h"
 #include "Type.h"
 extern FILE* yyout;
+extern MachineUnit mUnit;
 
 MachineOperand::MachineOperand(int tp, int val)
 {
@@ -89,7 +90,7 @@ void MachineOperand::output()
         else if(this->label[0] == '@')
             fprintf(yyout, "%s", this->label.substr(1).c_str());
         else
-            fprintf(yyout, "addr_%s", this->label.c_str());
+            fprintf(yyout, "addr_%s%d", this->label.c_str(), mUnit.getGlobalNo(this->label));
     default:
         break;
     }
@@ -419,7 +420,7 @@ void MachineBlock::output()
     {  
         MachineInstruction *iter_br = dynamic_cast<BranchMInstruction*>(iter);
         if(iter_br && iter_br->getOp() == BranchMInstruction::BX)
-        {
+        { // bx前插入pop
             MachineInstruction* cur_inst = 
                 new StackMInstrcuton(nullptr, StackMInstrcuton::POP, 
                     this->parent->getSavedRegs());
@@ -495,14 +496,15 @@ void MachineUnit::PrintGlobalDecl()
         fprintf(yyout, "\t.data\n");
     }
 
-    for(auto global_decl: global_list)
+    for(auto global_decl = global_list.begin(); global_decl != global_list.end(); global_decl++)
     {
-        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global_decl;
-        fprintf(yyout, "\t.global %s\n", se->toStr().c_str());
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)*global_decl;
+        std::string initV = global_inits[global_decl - global_list.begin()];
+        fprintf(yyout, "\t.global %s\n", se->getName().c_str());
         fprintf(yyout, "\t.align 4\n");
-        fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->getSize() / 8);
-        fprintf(yyout, "%s:\n", se->toStr().c_str());
-        fprintf(yyout, "\t.word %d\n", 0); // TODO: init value and array, wait for merge
+        fprintf(yyout, "\t.size %s, %d\n", se->getName().c_str(), se->getType()->getSize() / 8);
+        fprintf(yyout, "%s:\n", se->getName().c_str());
+        fprintf(yyout, "\t.word %s\n", initV.c_str());
     }
 
 }
@@ -524,9 +526,20 @@ void MachineUnit::output()
     for (auto iter = global_list.begin(); iter != global_list.end(); iter++)
     {
         IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)*iter;
-        fprintf(yyout, "addr_%s%d:\n", se->toStr().c_str(), (int)(iter - global_list.begin()));
-        fprintf(yyout, "\t.word %s\n", se->toStr().c_str());
+        fprintf(yyout, "addr_%s%d:\n", se->getName().c_str(), (int)(iter - global_list.begin()));
+        fprintf(yyout, "\t.word %s\n", se->getName().c_str());
     }
+}
+
+int MachineUnit::getGlobalNo(std::string name)
+{
+    for (int i = 0; i < (int)(global_list.size()); i++)
+    {
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global_list[i];
+        if (se->getName() == name)
+            return i;
+    }
+    return -1;
 }
 
 void MachineInstruction::insertBefore(MachineInstruction* inst)

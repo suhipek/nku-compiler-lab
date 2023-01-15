@@ -433,6 +433,16 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
 {
     auto cur_block = builder->getBlock();
     MachineInstruction* cur_inst = nullptr;
+    auto src = genMachineOperand(operands[1]);
+
+    if (operands[1]->getEntry()->isConstant()) 
+    {
+        // 处理立即数
+        auto dst = genMachineVReg();
+        cur_inst = new LoadMInstruction(cur_block, dst, src);
+        cur_block->InsertInst(cur_inst);
+        src = new MachineOperand(*dst);
+    }
 
     // Store global operand
     if(operands[0]->getEntry()->isVariable()
@@ -441,7 +451,6 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         auto dst = genMachineOperand(operands[0]);
         auto internal_reg1 = genMachineVReg();
         auto internal_reg2 = new MachineOperand(*internal_reg1);
-        auto src = genMachineOperand(operands[1]);
         // example: load r0, addr_a
         cur_inst = new LoadMInstruction(cur_block, internal_reg1, dst);
         cur_block->InsertInst(cur_inst);
@@ -456,11 +465,10 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
             && operands[0]->getDef()->isAlloc())
     {
         // example: store r1, [r0, #4]
-        auto dst = genMachineOperand(operands[1]);
-        auto src = genMachineReg(11); // fp
+        auto dst = genMachineReg(11); // fp
         auto offset = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset());
         // TODO：此处offset最大为255，如果超出需要临时寄存器转换
-        cur_inst = new StoreMInstruction(cur_block, dst, src, offset);
+        cur_inst = new StoreMInstruction(cur_block, src, dst, offset);
         cur_block->InsertInst(cur_inst);
     }
 
@@ -469,7 +477,6 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
     {
         // example: store r1, [r0]
         auto dst = genMachineOperand(operands[0]);
-        auto src = genMachineOperand(operands[1]);
         cur_inst = new StoreMInstruction(cur_block, dst, src);
         cur_block->InsertInst(cur_inst);
     }
@@ -495,6 +502,13 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_block->InsertInst(cur_inst);
         src1 = new MachineOperand(*internal_reg);
     }
+    if(src2->isImm())
+    {
+        auto internal_reg = genMachineVReg();
+        cur_inst = new LoadMInstruction(cur_block, internal_reg, src2);
+        cur_block->InsertInst(cur_inst);
+        src2 = new MachineOperand(*internal_reg);
+    }
     //ADD, SUB, MUL, DIV, AND, OR, MOD
     switch (opcode)
     {
@@ -502,6 +516,9 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, dst, src1, src2);
         break;
     case SUB:
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::SUB, dst, src1, src2);
+        break;
+    case USUB:
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::SUB, dst, src1, src2);
         break;
     case MUL:
@@ -517,6 +534,7 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::OR, dst, src1, src2);
         break;
     case MOD:
+    {
         // ARM汇编不支持取模，只能先整除再减去
         // dst = src1 / src2
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::DIV, dst, src1, src2);
@@ -526,6 +544,10 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::MUL, internal_reg, dst, src2);
         cur_block->InsertInst(cur_inst);
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::SUB, dst, src1, internal_reg);
+        break;
+    }
+    default:
+        fprintf(stderr, "Error: Unknown binary instruction opcode %d", opcode);
         break;
     }
     cur_block->InsertInst(cur_inst);

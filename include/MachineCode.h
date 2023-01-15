@@ -211,14 +211,20 @@ class MachineUnit
 private:
     std::vector<MachineFunction*> func_list;
     std::vector<SymbolEntry*> global_list;
+    std::vector<std::string> global_inits;
     void PrintGlobalDecl();
 public:
     std::vector<MachineFunction*>& getFuncs() {return func_list;};
     std::vector<MachineFunction*>::iterator begin() { return func_list.begin(); };
     std::vector<MachineFunction*>::iterator end() { return func_list.end(); };
     void InsertFunc(MachineFunction* func) { func_list.push_back(func);};
-    void InsertGlobalDecl(SymbolEntry* symbolEntry) {global_list.push_back(symbolEntry);};
+    void InsertGlobalDecl(SymbolEntry* symbolEntry, std::string init = "0") 
+    {
+        global_list.push_back(symbolEntry);
+        global_inits.push_back(init); // 应该用pair，但用了要改一堆东西
+    };
     void output();
+    int getGlobalNo(std::string name);
 };
 
 // 授人以渔

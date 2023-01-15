@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 
+extern bool dump_asm;
+
 SymbolEntry::SymbolEntry(Type *type, int kind) 
 {
     this->type = type;
@@ -29,6 +31,8 @@ IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int s
 
 std::string IdentifierSymbolEntry::toStr()
 {
+    if(scope == GLOBAL && dump_asm)
+        return name;
     return "@" + name;
 }
 
