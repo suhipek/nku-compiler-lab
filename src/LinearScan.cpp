@@ -187,7 +187,7 @@ bool LinearScan::linearScanRegisterAllocation()
         regs.push_back(i);
     for(auto &interval:intervals)
     {
-        // expireOldIntervals(interval); // 回收寄存器（1）
+        expireOldIntervals(interval); // 回收寄存器（1）
         // 非常奇怪的bug：mul v2, v2, v5会被分配为mul r8, r9, r9
         if(regs.empty())
         {
@@ -204,7 +204,7 @@ bool LinearScan::linearScanRegisterAllocation()
             // 按照活跃区间结束位置排序，使用lambda
             sort(active.begin(), active.end(), [](Interval* a, Interval* b) {return a->end < b->end;}); 
         }
-        expireOldIntervals(interval); // 回收寄存器（1）
+        // expireOldIntervals(interval); // 回收寄存器（1）
     }
     return success;
 }
@@ -280,7 +280,9 @@ void LinearScan::expireOldIntervals(Interval *interval)
     for (auto iter = active.begin(); 
         iter != active.end(); ) 
     {
-        if ((*iter)->end >= interval->start)
+        // if ((*iter)->end >= interval->start)
+        // 寄存器分配为什么会出现不正确的回收？
+        if ((*iter)->end >= interval->start - 1)
             return; // active按照end升序，头部大于，回收不了
         fprintf(stderr, "expireOldIntervals: recyling register %d\n", (*iter)->rreg);
         regs.push_back((*iter)->rreg);
