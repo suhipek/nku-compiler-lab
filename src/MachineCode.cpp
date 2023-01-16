@@ -448,10 +448,10 @@ std::vector<MachineOperand *> MachineFunction::getSavedRegs()
 
 void MachineFunction::output()
 {
-    const char *func_name = this->sym_ptr->toStr().c_str() + 1;
-    fprintf(yyout, "\t.global %s\n", func_name);
-    fprintf(yyout, "\t.type %s , %%function\n", func_name);
-    fprintf(yyout, "%s:\n", func_name);
+    std::string func_name = this->sym_ptr->toStr().substr(1);
+    fprintf(yyout, "\t.global %s\n", func_name.c_str());
+    fprintf(yyout, "\t.type %s , %%function\n", func_name.c_str());
+    fprintf(yyout, "%s:\n", func_name.c_str());
     // TODO
     /* Hint:
     *  1. Save fp
