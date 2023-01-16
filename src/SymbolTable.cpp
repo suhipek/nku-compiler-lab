@@ -97,3 +97,4 @@ int SymbolTable::counter = 0;
 static SymbolTable t;
 SymbolTable *identifiers = &t;
 SymbolTable *globals = &t;
+ExprNode IdentifierSymbolEntry::*constInit = nullptr;

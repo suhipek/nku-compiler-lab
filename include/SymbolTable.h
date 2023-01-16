@@ -7,6 +7,7 @@
 class Type;
 class Operand;
 class StmtNode;
+class ExprNode;
 class FunctionDef;
 
 class SymbolEntry
@@ -83,6 +84,7 @@ private:
     // You can add any field you need here.
     
 public:
+    ExprNode *constInit;
     FunctionDef *reverse_func;
     IdentifierSymbolEntry(Type *type, std::string name, int scope);
     virtual ~IdentifierSymbolEntry() {};

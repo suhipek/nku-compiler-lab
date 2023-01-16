@@ -5,6 +5,7 @@
 #include "IRBuilder.h"
 #include <string>
 #include "Type.h"
+#include <cassert>
 
 extern FILE *yyout;
 int Node::counter = 0;
@@ -17,6 +18,44 @@ Node::Node()
     seq = counter++;
     lineno = yyget_lineno();
 }
+
+int BinaryExpr::getConstExpVal()
+{
+    // ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ
+    switch(op)
+    {
+    case ADD:
+        return expr1->getConstExpVal() + expr2->getConstExpVal();
+    case SUB:
+        return expr1->getConstExpVal() - expr2->getConstExpVal();
+    case MUL:
+        return expr1->getConstExpVal() * expr2->getConstExpVal();
+    case DIV:
+        return expr1->getConstExpVal() / expr2->getConstExpVal();
+    case MOD:
+        return expr1->getConstExpVal() % expr2->getConstExpVal();
+    }
+    assert(false); // 常量求值也就数组下标用，不会有其他的了
+}
+
+int UnaryExpr::getConstExpVal()
+{
+    assert(op == SUB);
+    return -(expr->getConstExpVal());
+}
+
+int Constant::getConstExpVal()
+{
+    return std::stoi(this->getValue());
+}
+
+int Id::getConstExpVal()
+{
+    auto constInitValue = ((IdentifierSymbolEntry*) symbolEntry)->constInit;
+    assert(constInitValue != nullptr); // not constant
+    return constInitValue->getConstExpVal();
+}
+
 
 void Node::backPatch(std::vector<Instruction*> &list, BasicBlock*bb)
 {
@@ -314,11 +353,32 @@ void Constant::genCode()
     // we don't need to generate code.
 }
 
-void Id::genCode()
+void Id::genCode(bool left)
 {
     BasicBlock *bb = builder->getInsertBB();
     Operand *addr = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getAddr();
-    new LoadInstruction(dst, addr, bb);
+    if(!arrayIndex)
+    {
+        new LoadInstruction(dst, addr, bb);
+        return;
+    }
+    std::vector<ExprNode*> params = arrayIndex->getParams();
+    std::vector<Operand*> offsets;
+    // 遍历下标，生成数组下标的代码，生成GEP指令
+    for(auto it:params)
+    {
+        it->genCode();
+        offsets.push_back(it->getOperand());
+    }
+    if(left)
+    {
+        new GepInstruction(dst, addr, offsets, bb);
+        return;
+    }
+    Type* ele_type = dynamic_cast<ArrayType*>(symbolEntry->getType())->getValueType();
+    Operand* tmp = new Operand(new TemporarySymbolEntry(new PointerType(ele_type), SymbolTable::getLabel()));
+    new GepInstruction(tmp, addr, offsets, bb);
+    new LoadInstruction(dst, tmp, bb);
 }
 
 void Id::genBr()
@@ -517,6 +577,12 @@ void AssignStmt::genCode()
      * We haven't implemented array yet, the lval can only be ID. So we just store the result of the `expr` to the addr of the id.
      * If you want to implement array, you have to caculate the address first and then store the result into it.
      */
+    if(((Id *)lval)->isArray())
+    {
+        ((Id *)lval)->genCode(true); // genCode as lVal
+        addr = lval->getOperand();
+    }
+    
     new StoreInstruction(addr, src, bb);
 }
 
@@ -875,8 +941,10 @@ void Id::output(int level)
     name = symbolEntry->toStr();
     type = symbolEntry->getType()->toStr();
     scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_entry: %p\n", level, ' ',
-            name.c_str(), scope, type.c_str(), symbolEntry);
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_entry: %p\n", 
+            level, ' ', name.c_str(), scope, type.c_str(), symbolEntry);
+    if(arrayIndex && !arrayIndex->empty())
+        arrayIndex->output(level + 4);
 }
 
 void CompoundStmt::output(int level)
@@ -888,7 +956,7 @@ void CompoundStmt::output(int level)
 
 void SeqNode::output(int level)
 {
-    fprintf(yyout, "%*cSequence\n", level-2, ' ');
+    // fprintf(yyout, "%*cSequence\n", level-2, ' ');
     stmt1->output(level);
     stmt2->output(level);
 }
