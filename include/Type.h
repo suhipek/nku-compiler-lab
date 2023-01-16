@@ -9,7 +9,7 @@ private:
     int kind;
     bool isConstType;
 protected:
-    enum {INT, VOID, FUNC, PTR};
+    enum {INT, VOID, FUNC, PTR, ARR};
     int size;
 public:
     Type(int kind, bool _isConst = false) : kind(kind), isConstType(_isConst) {};
@@ -63,11 +63,12 @@ class ArrayType : public Type
 {
 private:
     Type *valueType;
-    int size;
+    int length;
 public:
-    ArrayType(Type* valueType, int size) : Type(Type::PTR), size(size) {this->valueType = valueType;};
+    ArrayType(Type* valueType, int length) : Type(Type::ARR), length(length) {this->valueType = valueType;};
     Type* getValueType() {return valueType;};
-    int getSize() {return size;};
+    int getArraySize() {return length * valueType->getSize();};
+    int getLength() {return length;};
     std::string toStr();
 };
 

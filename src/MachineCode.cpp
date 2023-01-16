@@ -175,6 +175,7 @@ void BinaryMInstruction::output()
     this->use_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[1]->output();
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -222,6 +223,7 @@ void LoadMInstruction::output()
 
     if(this->use_list[0]->isReg()||this->use_list[0]->isVReg())
         fprintf(yyout, "]");
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -262,6 +264,7 @@ void StoreMInstruction::output()
 
     if(this->use_list[1]->isReg()||this->use_list[1]->isVReg())
         fprintf(yyout, "]");
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -287,6 +290,7 @@ void MovMInstruction::output()
     this->def_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[0]->output();
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -321,6 +325,7 @@ void BranchMInstruction::output()
     PrintCond();
     fprintf(yyout, " ");
     this->use_list[0]->output();
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -347,6 +352,7 @@ void CmpMInstruction::output()
     this->use_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[1]->output();
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 
@@ -403,6 +409,7 @@ void StackMInstrcuton::output()
     if(this->use_list.size() > 1)
         fprintf(yyout, "}");
 
+    fprintf(yyout, "\t//%d", no);
     fprintf(yyout, "\n");
 }
 

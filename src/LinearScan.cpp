@@ -197,7 +197,7 @@ bool LinearScan::linearScanRegisterAllocation()
         }
         else
         {
-            fprintf(stderr, "linearScanRegisterAllocation: assigning register %d to interval %d\n", regs.back(), interval->rreg);
+            fprintf(stderr, "linearScanRegisterAllocation: assigning register %d to %p\n", regs.back(), interval);
             interval->rreg = regs.back(); // 分配寄存器
             regs.pop_back(); // 从可用寄存器列表中删除
             active.push_back(std::move(interval)); // 将 interval 插入到 active 列表中

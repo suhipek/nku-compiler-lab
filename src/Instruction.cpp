@@ -384,7 +384,13 @@ void AllocaInstruction::genMachineCode(AsmBuilder* builder)
     * Allocate stack space for local variabel
     * Store frame offset in symbol entry */
     auto cur_func = builder->getFunction();
-    int offset = cur_func->AllocSpace(4);
+    auto arr_type = dynamic_cast<ArrayType*>(se->getType());
+    int alloc_size = 4;
+    if(arr_type)
+    {
+        alloc_size = arr_type->getArraySize() / 8;
+    }
+    int offset = cur_func->AllocSpace(alloc_size);
     dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->setOffset(-offset);
 }
 
@@ -828,7 +834,7 @@ void GepInstruction::output() const
     std::string arr = operands[1]->toStr();
     std::string dst_type = operands[0]->getType()->toStr();
     std::string arr_type = operands[1]->getType()->toStr();
-    std::string ele_type = ((PointerType *)(operands[1]->getType()))->getValueType()->toStr();
+    std::string ele_type = ((ArrayType *)(operands[1]->getType()))->getValueType()->toStr();
     std::string gep_params;
     for(auto it = operands.begin() + 2; it != operands.end(); ++it)
     {
@@ -846,5 +852,66 @@ void GepInstruction::output() const
 
 void GepInstruction::genMachineCode(AsmBuilder* builder)
 {
-    // TODO
+    // t1 = gep arr, 1
+    // mov v2, #-20 (begin of array)(tmp_se->getOffset)
+    // mov v3, #4 (size of element)
+    // mov v4, #1 (index)
+    // mul v5, v3, v4 (offset from begin of array)
+    // add v6, v2, v5 (distance from element to fp)
+    // add v7, fp, v6 (addr of element)
+
+    // t1 = gep arr, 0, 1
+    // mov dst, #-20 (begin of array)(tmp_se->getOffset)
+
+    // mov v3, #8 (size of element)
+    // mov v4, #0 (index)
+    // mul v5, v3, v4 (offset from begin of array)
+    // add dst, dst, v5 (distance from element to fp)
+    // add dst, fp, dst (addr of element)
+
+    // mov v9, #4 (size of element)
+    // mov v10, #1 (index)
+    // mul v11, v9, v10 (offset from begin of array)
+    // add dst, dst, v11 (distance from element to fp)
+    auto cur_block = builder->getBlock();
+    MachineInstruction *cur_inst;
+    auto arr_se = (TemporarySymbolEntry*)(operands[1]->getEntry());
+    auto fp = genMachineReg(11); // FP
+    auto total_offset_op = genMachineVReg();
+    auto dst = genMachineOperand(operands[0]);
+    Type *ele_type = ((ArrayType *)(operands[1]->getType()))->getValueType();
+    cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, 
+                        total_offset_op, genMachineImm(arr_se->getOffset()));
+    cur_block->InsertInst(cur_inst);
+
+    for(auto it = operands.begin() + 2; it != operands.end(); ++it)
+    {
+        auto operand = *it;
+        auto mope = genMachineOperand(operand);
+        auto size_ele_op = genMachineVReg();
+        auto index_op = genMachineVReg();
+        auto offset_op = genMachineVReg();
+
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, 
+                            size_ele_op, genMachineImm(4));
+        cur_block->InsertInst(cur_inst);
+        ele_type = ((ArrayType *)ele_type)->getValueType();
+
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, 
+                            index_op, mope);
+        cur_block->InsertInst(cur_inst);
+
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::MUL, 
+                            offset_op, size_ele_op, index_op);
+        cur_block->InsertInst(cur_inst);
+
+        if(it == operands.end() - 1)
+
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, 
+                            total_offset_op, total_offset_op, offset_op);
+        cur_block->InsertInst(cur_inst);
+    }
+    cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, 
+                            dst, fp, total_offset_op);
+    cur_block->InsertInst(cur_inst);
 }
