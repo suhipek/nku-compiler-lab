@@ -43,7 +43,7 @@
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef WhileStmt
 %nterm <stmttype> VarList ConstList VarDef ConstDef ExprStmt
-%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp LAndExp CallExp MulExp
+%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp CmpExp LAndExp CallExp MulExp
 %nterm <callparamstype> CallParam // 这么写是不是有点割裂。。。算了，先这样吧
 %nterm <funcparamstype> FuncParam // #define PHILOSOPHY 能跑就行
 %nterm <type> Type
@@ -246,39 +246,43 @@ AddExp
 // LESS, GREATER, EQ, NEQ, LEQ, GEQ, LE, GE
 RelExp
     :
-    AddExp {$$ = $1;}
+    CmpExp {$$ = $1;}
     |
-    RelExp LESS AddExp
-    {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
-        $$ = new BinaryExpr(se, BinaryExpr::LESS, $1, $3);
-    }
-    |
-    RelExp GREATER AddExp
-    {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
-        $$ = new BinaryExpr(se, BinaryExpr::GREATER, $1, $3);
-    }
-    |
-    RelExp EQ AddExp
+    RelExp EQ CmpExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::EQ, $1, $3);
     }
     |
-    RelExp NEQ AddExp
+    RelExp NEQ CmpExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::NEQ, $1, $3);
     }
+    ;
+CmpExp
+    :
+    AddExp {$$ = $1;}
     |
-    RelExp LEQ AddExp
+    CmpExp LESS AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::LESS, $1, $3);
+    }
+    |
+    CmpExp GREATER AddExp
+    {
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::GREATER, $1, $3);
+    }
+    |
+    CmpExp LEQ AddExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::LEQ, $1, $3);
     }
     |
-    RelExp GEQ AddExp
+    CmpExp GEQ AddExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::GEQ, $1, $3);
