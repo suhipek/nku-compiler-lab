@@ -884,6 +884,7 @@ void GepInstruction::genMachineCode(AsmBuilder* builder)
                         total_offset_op, genMachineImm(arr_se->getOffset()));
     cur_block->InsertInst(cur_inst);
 
+    auto internal_reg = genMachineVReg();
     for(auto it = operands.begin() + 2; it != operands.end(); ++it)
     {
         auto operand = *it;
@@ -891,6 +892,7 @@ void GepInstruction::genMachineCode(AsmBuilder* builder)
         auto size_ele_op = genMachineVReg();
         auto index_op = genMachineVReg();
         auto offset_op = genMachineVReg();
+        auto tmp_total_op = genMachineVReg();
 
         cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, 
                             size_ele_op, genMachineImm(4));
@@ -908,7 +910,11 @@ void GepInstruction::genMachineCode(AsmBuilder* builder)
         if(it == operands.end() - 1)
 
         cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, 
-                            total_offset_op, total_offset_op, offset_op);
+                            tmp_total_op, total_offset_op, offset_op);
+        cur_block->InsertInst(cur_inst);
+
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, 
+                            total_offset_op, tmp_total_op);
         cur_block->InsertInst(cur_inst);
     }
     cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD, 

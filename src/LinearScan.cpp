@@ -23,6 +23,7 @@ void LinearScan::allocateRegisters()
         while (!success)        // repeat until all vregs can be mapped
         {
             computeLiveIntervals();
+            // mUnit.output();
             success = linearScanRegisterAllocation();
             if (success)        // all vregs can be mapped to real regs
                 modifyCode();
@@ -189,6 +190,11 @@ bool LinearScan::linearScanRegisterAllocation()
     {
         expireOldIntervals(interval); // 回收寄存器（1）
         // 非常奇怪的bug：mul v2, v2, v5会被分配为mul r8, r9, r9
+        // 很奇怪BUG的原因：
+        // mov v6, #-20
+        // add v6, v6, #4
+        // 第一个MOV指令会将v6存入def，第二个ADD指令会将v6再次存入def
+        // 然而第二个指令的v6实际上和第一个是同一个寄存器
         if(regs.empty())
         {
             // 溢出寄存器（2a）
