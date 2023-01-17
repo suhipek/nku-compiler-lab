@@ -417,7 +417,9 @@ VarDef
         Type* type = nowType;
         for(auto it = indices.rbegin(); it != indices.rend(); it++)
         {
-            type = new ArrayType(type, (*it)->getConstExpVal());
+            int arraySize = (*it)->getConstExpVal();
+            // printf("array: %d\n", arraySize);
+            type = new ArrayType(type, arraySize);
         }
         se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
         identifiers->install($1, se);

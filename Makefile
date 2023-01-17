@@ -49,22 +49,22 @@ $(BINARY):$(OBJ)
 
 app:$(LEXER) $(PARSER) $(BINARY)
 
-run:clean app
+run: app
 	@$(BINARY) -o example.s -S example.sy
 
-run-ir:clean app
+run-ir: app
 	@$(BINARY) -o example.ll -i example.sy
 
-run-asm:clean app
+run-asm: app
 	@$(BINARY) -o example.s -S example.sy
 
-run-debug:clean app
+run-debug: app
 	@$(BINARY) -o example.s -S -u -i -a example.sy
 
 clbin:
 	@clang -x c example.sy sysyruntimelibrary/sylib.c -o example.cl.bin
 
-mybin:run
+mybin:run-ir
 	@clang example.ll sysyruntimelibrary/sylib.c -o example.my.bin
 
 bin:mybin clbin
@@ -108,7 +108,7 @@ testlab6:clean app $(OUTPUT_LAB6)
 testlab7:clean app $(OUTPUT_LAB7)
 
 .ONESHELL:
-test: clean app
+test: app
 	@success=0
 	@for file in $(sort $(TESTCASE))
 	do

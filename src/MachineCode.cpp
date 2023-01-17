@@ -96,6 +96,23 @@ void MachineOperand::output()
     }
 }
 
+std::string MachineOperand::toStr()
+{
+    switch (this->type)
+    {
+    case IMM:
+        return "#" + std::to_string(this->val);
+    case VREG:
+        return "v" + std::to_string(this->reg_no);
+    case REG:
+        return "r" + std::to_string(this->reg_no);
+    case LABEL:
+        return this->label;
+    default:
+        return "";
+    }
+}
+
 void MachineInstruction::PrintCond()
 {
     // condType { EQ, NE, LT, LE , GT, GE, NONE }
@@ -122,6 +139,23 @@ void MachineInstruction::PrintCond()
     default:
         break;
     }
+}
+
+void MachineInstruction::debug_comment()
+{
+    fprintf(yyout, "\t\t//%d\t ", no);
+    std::string defs_str = "";
+    for (auto def : def_list)
+    {
+        defs_str += def->toStr() + " ";
+    }
+    fprintf(yyout, "defs: %s", defs_str.c_str());
+    std::string uses_str = "";
+    for (auto use : use_list)
+    {
+        uses_str += use->toStr() + " ";
+    }
+    fprintf(yyout, "uses: %s", uses_str.c_str());
 }
 
 BinaryMInstruction::BinaryMInstruction(
@@ -175,7 +209,7 @@ void BinaryMInstruction::output()
     this->use_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[1]->output();
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -206,7 +240,9 @@ void LoadMInstruction::output()
     // Load immediate num, eg: ldr r1, =8
     if(this->use_list[0]->isImm())
     {
-        fprintf(yyout, "=%d\n", this->use_list[0]->getVal());
+        fprintf(yyout, "=%d", this->use_list[0]->getVal());
+        debug_comment();
+        fprintf(yyout, "\n");
         return;
     }
 
@@ -223,7 +259,7 @@ void LoadMInstruction::output()
 
     if(this->use_list[0]->isReg()||this->use_list[0]->isVReg())
         fprintf(yyout, "]");
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -264,7 +300,7 @@ void StoreMInstruction::output()
 
     if(this->use_list[1]->isReg()||this->use_list[1]->isVReg())
         fprintf(yyout, "]");
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -290,7 +326,7 @@ void MovMInstruction::output()
     this->def_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[0]->output();
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -325,7 +361,7 @@ void BranchMInstruction::output()
     PrintCond();
     fprintf(yyout, " ");
     this->use_list[0]->output();
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -352,7 +388,7 @@ void CmpMInstruction::output()
     this->use_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[1]->output();
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 
@@ -409,7 +445,7 @@ void StackMInstrcuton::output()
     if(this->use_list.size() > 1)
         fprintf(yyout, "}");
 
-    fprintf(yyout, "\t//%d", no);
+    debug_comment();
     fprintf(yyout, "\n");
 }
 

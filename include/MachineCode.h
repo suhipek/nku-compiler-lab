@@ -49,6 +49,7 @@ public:
     MachineInstruction* getParent() { return this->parent;};
     void PrintReg();
     void output();
+    std::string toStr();
 };
 
 class MachineInstruction
@@ -66,6 +67,7 @@ protected:
     void addUse(MachineOperand* ope) { use_list.push_back(ope); };
     // Print execution code after printing opcode
     void PrintCond();
+    void debug_comment();
     enum instType { BINARY, LOAD, STORE, MOV, BRANCH, CMP, STACK };
 public:
     enum condType { EQ, LT, LE , GT, GE, NE, NONE };
