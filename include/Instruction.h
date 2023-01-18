@@ -15,12 +15,16 @@ public:
     BasicBlock *getParent();
     bool isUncond() const {return instType == UNCOND;};
     bool isCond() const {return instType == COND;};
+    unsigned getOpcode() const {return opcode;};
     void setParent(BasicBlock *);
     void setNext(Instruction *);
     void setPrev(Instruction *);
     Instruction *getNext();
     Instruction *getPrev();
+    virtual Operand* getDef(){return nullptr;};
+    virtual std::vector<Operand *> getUse(){return std::vector<Operand *>();};
     virtual void output() const = 0;
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
 protected:
     unsigned instType;
     unsigned opcode;
@@ -28,7 +32,6 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -44,6 +47,7 @@ class AllocaInstruction : public Instruction
 public:
     AllocaInstruction(Operand *dst, SymbolEntry *se, BasicBlock *insert_bb = nullptr);
     ~AllocaInstruction();
+    Operand* getDef();
     void output() const;
 private:
     SymbolEntry *se;
@@ -54,6 +58,8 @@ class LoadInstruction : public Instruction
 public:
     LoadInstruction(Operand *dst, Operand *src_addr, BasicBlock *insert_bb = nullptr);
     ~LoadInstruction();
+    std::vector<Operand *> getUse();
+    Operand* getDef();
     void output() const;
 };
 
@@ -62,6 +68,7 @@ class StoreInstruction : public Instruction
 public:
     StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *insert_bb = nullptr);
     ~StoreInstruction();
+    std::vector<Operand *> getUse();
     void output() const;
 };
 
@@ -70,6 +77,8 @@ class BinaryInstruction : public Instruction
 public:
     BinaryInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~BinaryInstruction();
+    std::vector<Operand *> getUse();
+    Operand* getDef();
     void output() const;
     enum {SUB, ADD, MUL, DIV, MOD, AND, OR, USUB};
 };
@@ -79,6 +88,8 @@ class CmpInstruction : public Instruction
 public:
     CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~CmpInstruction();
+    std::vector<Operand *> getUse();
+    Operand* getDef();
     void output() const;
     enum {E, NE, L, GE, G, LE};
 };
@@ -101,6 +112,7 @@ class CondBrInstruction : public Instruction
 public:
     CondBrInstruction(BasicBlock*, BasicBlock*, Operand *, BasicBlock *insert_bb = nullptr);
     ~CondBrInstruction();
+    std::vector<Operand *> getUse();
     void output() const;
     void setTrueBranch(BasicBlock*);
     BasicBlock* getTrueBranch();
@@ -116,6 +128,7 @@ class RetInstruction : public Instruction
 public:
     RetInstruction(Operand *src, BasicBlock *insert_bb = nullptr);
     ~RetInstruction();
+    std::vector<Operand *> getUse();
     void output() const;
 };
 
@@ -124,6 +137,7 @@ class CallInstruction : public Instruction
 public:
     CallInstruction(Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb = nullptr);
     ~CallInstruction();
+    std::vector<Operand *> getUse();
     void output() const;
 private:
     SymbolEntry *se;
@@ -135,6 +149,7 @@ class SextInstruction : public Instruction
 public:
     SextInstruction(Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb = nullptr);
     ~SextInstruction();
+    std::vector<Operand *> getUse();
     void output() const;
 private:
     Type *toType;

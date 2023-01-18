@@ -72,6 +72,19 @@ BinaryInstruction::~BinaryInstruction()
     operands[2]->removeUse(this);
 }
 
+std::vector<Operand *> BinaryInstruction::getUse()
+{
+    std::vector<Operand *> ret;
+    ret.push_back(operands[1]);
+    ret.push_back(operands[2]);
+    return ret;
+}
+
+Operand* BinaryInstruction::getDef()
+{
+    return operands[0];
+}
+
 void BinaryInstruction::output() const
 {
     std::string s1, s2, s3, op, type;
@@ -122,6 +135,19 @@ CmpInstruction::~CmpInstruction()
         delete operands[0];
     operands[1]->removeUse(this);
     operands[2]->removeUse(this);
+}
+
+std::vector<Operand *> CmpInstruction::getUse()
+{
+    std::vector<Operand *> ret;
+    ret.push_back(operands[1]);
+    ret.push_back(operands[2]);
+    return ret;
+}
+
+Operand* CmpInstruction::getDef()
+{
+    return operands[0];
 }
 
 void CmpInstruction::output() const
@@ -191,6 +217,13 @@ CondBrInstruction::~CondBrInstruction()
     operands[0]->removeUse(this);
 }
 
+std::vector<Operand *> CondBrInstruction::getUse()
+{
+    std::vector<Operand *> ret;
+    ret.push_back(operands[0]);
+    return ret;
+}
+
 void CondBrInstruction::output() const
 {
     std::string cond, type;
@@ -236,6 +269,14 @@ RetInstruction::~RetInstruction()
         operands[0]->removeUse(this);
 }
 
+std::vector<Operand *> RetInstruction::getUse()
+{
+    std::vector<Operand *> ret;
+    if(!operands.empty())
+        ret.push_back(operands[0]);
+    return ret;
+}
+
 void RetInstruction::output() const
 {
     if(operands.empty())
@@ -265,6 +306,11 @@ AllocaInstruction::~AllocaInstruction()
         delete operands[0];
 }
 
+Operand* AllocaInstruction::getDef()
+{
+    return operands[0];
+}
+
 void AllocaInstruction::output() const
 {
     std::string dst, type;
@@ -287,6 +333,18 @@ LoadInstruction::~LoadInstruction()
     if(operands[0]->usersNum() == 0)
         delete operands[0];
     operands[1]->removeUse(this);
+}
+
+std::vector<Operand *> LoadInstruction::getUse()
+{
+    std::vector<Operand *> use;
+    use.push_back(operands[1]);
+    return use;
+}
+
+Operand* LoadInstruction::getDef()
+{
+    return operands[0];
 }
 
 void LoadInstruction::output() const
@@ -312,6 +370,14 @@ StoreInstruction::~StoreInstruction()
 {
     operands[0]->removeUse(this);
     operands[1]->removeUse(this);
+}
+
+std::vector<Operand *> StoreInstruction::getUse()
+{
+    std::vector<Operand *> use;
+    use.push_back(operands[0]);
+    use.push_back(operands[1]);
+    return use;
 }
 
 void StoreInstruction::output() const
@@ -343,6 +409,14 @@ CallInstruction::~CallInstruction()
 {
     for(auto it = operands.begin() + 1; it != operands.end(); ++it)
         (*it)->removeUse(this);
+}
+
+std::vector<Operand *> CallInstruction::getUse()
+{
+    std::vector<Operand *> use;
+    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+        use.push_back(*it);
+    return use;
 }
 
 void CallInstruction::output() const
@@ -390,6 +464,14 @@ SextInstruction::~SextInstruction()
 {
     operands[0]->removeUse(this);
     operands[1]->removeUse(this);
+}
+
+std::vector<Operand *> SextInstruction::getUse()
+{
+    std::vector<Operand *> use;
+    use.push_back(operands[0]);
+    use.push_back(operands[1]);
+    return use;
 }
 
 void SextInstruction::output() const

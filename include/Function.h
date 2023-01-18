@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <vector>
 #include <algorithm>
 #include <iostream>
 #include "BasicBlock.h"
@@ -31,6 +32,7 @@ public:
     void remove(BasicBlock *bb);
     void output() const;
     std::vector<BasicBlock *> &getBlockList(){return block_list;};
+    std::vector<std::vector<int>> getBlockMap();
     iterator begin() { return block_list.begin(); };
     iterator end() { return block_list.end(); };
     reverse_iterator rbegin() { return block_list.rbegin(); };

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "Ast.h"
 #include "Unit.h"
+#include "UnreachElim.h"
 using namespace std;
 
 Ast ast;

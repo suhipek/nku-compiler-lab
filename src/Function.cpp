@@ -73,3 +73,20 @@ void Function::output() const
 
     fprintf(yyout, "}\n");
 }
+
+
+std::vector<std::vector<int>> Function::getBlockMap() {
+    int len = block_list.size();
+    std::vector<std::vector<int>> m(len, std::vector<int>(len, 0));
+    for (int i = 0; i < len; i++) {
+        auto iter = block_list[i]->succ_begin();
+        auto end = block_list[i]->succ_end();
+        while (iter != end) {
+            int j = find(block_list.begin(), block_list.end(), *iter) -
+                    block_list.begin();
+            m[i][j] = 1;
+            iter++;
+        }
+    }
+    return m;
+} 
