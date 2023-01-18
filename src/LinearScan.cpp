@@ -188,7 +188,7 @@ bool LinearScan::linearScanRegisterAllocation()
         regs.push_back(i);
     for(auto &interval:intervals)
     {
-        expireOldIntervals(interval); // 回收寄存器（1）
+        // expireOldIntervals(interval); // 回收寄存器（1）
         // 非常奇怪的bug：mul v2, v2, v5会被分配为mul r8, r9, r9
         // 很奇怪BUG的原因：
         // mov v6, #-20
@@ -210,7 +210,7 @@ bool LinearScan::linearScanRegisterAllocation()
             // 按照活跃区间结束位置排序，使用lambda
             sort(active.begin(), active.end(), [](Interval* a, Interval* b) {return a->end < b->end;}); 
         }
-        // expireOldIntervals(interval); // 回收寄存器（1）
+        expireOldIntervals(interval); // 回收寄存器（1）
     }
     return success;
 }
