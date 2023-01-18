@@ -72,3 +72,10 @@ Type* TypeSystem::getConstTypeOf(Type *type)
         return type;
     }
 }
+
+std::string ArrayType::toStr()
+{
+    std::ostringstream buffer;
+    buffer << "[" << size << " x " << valueType->toStr() << "]";
+    return buffer.str();
+}

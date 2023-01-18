@@ -155,4 +155,14 @@ private:
     Type *toType;
 };
 
+class GepInstruction : public Instruction
+{
+public:
+    GepInstruction(Operand *dst, Operand *src, std::vector<Operand*> &args, BasicBlock *insert_bb = nullptr);
+    ~GepInstruction();
+    void output() const;
+private:
+    std::vector<Operand*> args;
+};
+
 #endif

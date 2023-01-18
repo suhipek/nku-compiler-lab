@@ -50,6 +50,9 @@ app:$(LEXER) $(PARSER) $(BINARY)
 run:clean app
 	@$(BINARY) -o example.ll -i example.sy
 
+ast:clean app
+	@$(BINARY) -o example.ast -a example.sy
+
 clbin:
 	@clang -x c example.sy sysyruntimelibrary/sylib.c -o example.cl.bin
 

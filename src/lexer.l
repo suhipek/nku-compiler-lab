@@ -191,6 +191,16 @@ commentelement [^\n]
         DEBUG_FOR_LAB4("RBRACE\t}");
     return RBRACE;
 }
+"[" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("LBRACKET\t[");
+    return LBRACKET;
+}
+"]" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("RBRACKET\t]");
+    return RBRACKET;
+}
 "," {
     if(dump_tokens)
         DEBUG_FOR_LAB4("COMMA\t,");
