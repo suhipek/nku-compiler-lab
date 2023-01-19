@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
     if(dump_ast)
         ast.output();
     ast.genCode(&unit);
+    UnreachElim ue(&unit, true);
+    ue.pass();
     if(dump_ir)
         unit.output();
     return 0;

@@ -231,7 +231,10 @@ void CondBrInstruction::output() const
     type = operands[0]->getType()->toStr();
     int true_label = true_branch->getNo();
     int false_label = false_branch->getNo();
-    fprintf(yyout, "  br %s %s, label %%B%d, label %%B%d\n", type.c_str(), cond.c_str(), true_label, false_label);
+    fprintf(yyout, "  br %s %s, label %%B%d, label %%B%d", type.c_str(), cond.c_str(), true_label, false_label);
+    if (operands[0]->constInit)
+        fprintf(yyout, " ; %d", operands[0]->constValue);
+    fprintf(yyout, "\n");
 }
 
 void CondBrInstruction::setFalseBranch(BasicBlock *bb)

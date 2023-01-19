@@ -18,41 +18,61 @@ Node::Node()
     lineno = yyget_lineno();
 }
 
-int BinaryExpr::getConstExpVal()
+int BinaryExpr::getConstExpVal(bool *success)
 {
     // ADD, SUB, AND, MUL, DIV, MOD, OR, LESS, GREATER, EQ, NEQ, LEQ, GEQ
     switch(op)
     {
     case ADD:
-        return expr1->getConstExpVal() + expr2->getConstExpVal();
+        return expr1->getConstExpVal(success) + expr2->getConstExpVal(success);
     case SUB:
-        return expr1->getConstExpVal() - expr2->getConstExpVal();
+        return expr1->getConstExpVal(success) - expr2->getConstExpVal(success);
     case MUL:
-        return expr1->getConstExpVal() * expr2->getConstExpVal();
+        return expr1->getConstExpVal(success) * expr2->getConstExpVal(success);
     case DIV:
-        return expr1->getConstExpVal() / expr2->getConstExpVal();
+        return expr1->getConstExpVal(success) / expr2->getConstExpVal(success);
     case MOD:
-        return expr1->getConstExpVal() % expr2->getConstExpVal();
+        return expr1->getConstExpVal(success) % expr2->getConstExpVal(success);
+    case AND:
+        return expr1->getConstExpVal(success) && expr2->getConstExpVal(success);
+    case OR:
+        return expr1->getConstExpVal(success) || expr2->getConstExpVal(success);
+    case LESS:
+        return expr1->getConstExpVal(success) < expr2->getConstExpVal(success);
+    case GREATER:
+        return expr1->getConstExpVal(success) > expr2->getConstExpVal(success);
+    case EQ:
+        return expr1->getConstExpVal(success) == expr2->getConstExpVal(success);
+    case NEQ:
+        return expr1->getConstExpVal(success) != expr2->getConstExpVal(success);
+    case LEQ:
+        return expr1->getConstExpVal(success) <= expr2->getConstExpVal(success);
+    case GEQ:
+        return expr1->getConstExpVal(success) >= expr2->getConstExpVal(success);
     }
-    assert(false); // 常量求值也就数组下标用，不会有其他的了
+    assert(false);
 }
 
-int UnaryExpr::getConstExpVal()
+int UnaryExpr::getConstExpVal(bool *success)
 {
     assert(op == SUB);
-    return -(expr->getConstExpVal());
+    return -(expr->getConstExpVal(success));
 }
 
-int Constant::getConstExpVal()
+int Constant::getConstExpVal(bool *success)
 {
     return std::stoi(this->getValue());
 }
 
-int Id::getConstExpVal()
+int Id::getConstExpVal(bool *success)
 {
     auto constInitValue = ((IdentifierSymbolEntry*) symbolEntry)->constInit;
-    assert(constInitValue != nullptr); // not constant
-    return constInitValue->getConstExpVal();
+    if(!constInitValue)
+    {
+        *success = false;
+        return 0;
+    }
+    return constInitValue->getConstExpVal(success);
 }
 
 
@@ -210,7 +230,7 @@ void BinaryExpr::genCode()
                 break;
         }
         
-        if(src1->getType() != src2->getType())
+        if(src1->getType()->getKind() != src2->getType()->getKind())
         {
             Operand *converted;
             if(src1->getType() == TypeSystem::intType)
@@ -272,6 +292,9 @@ void BinaryExpr::genBr()
         BasicBlock *trueBB = new BasicBlock(func);
         BasicBlock *falseBB = new BasicBlock(func);
         BasicBlock *mergeBB = new BasicBlock(func);
+        bool success = true;
+        int cond_val = getConstExpVal(&success);
+        if(success) dst->setConstInit(cond_val);
         true_list.push_back(new CondBrInstruction(trueBB, falseBB, dst, bb));
         false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
     }
@@ -311,7 +334,9 @@ void UnaryExpr::genBr()
     BasicBlock *trueBB = new BasicBlock(func);
     BasicBlock *falseBB = new BasicBlock(func);
     BasicBlock *mergeBB = new BasicBlock(func);
-
+    bool success = true;
+    int cond_val = getConstExpVal(&success);
+    if(success) dst->setConstInit(cond_val);
     true_list.push_back(new CondBrInstruction(trueBB, falseBB, dst, bb));
     false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
 }
@@ -344,7 +369,9 @@ void CallExpr::genBr()
     BasicBlock *trueBB = new BasicBlock(func);
     BasicBlock *falseBB = new BasicBlock(func);
     BasicBlock *mergeBB = new BasicBlock(func);
-
+    bool success = true;
+    int cond_val = getConstExpVal(&success);
+    if(success) _dst->setConstInit(cond_val);
     true_list.push_back(new CondBrInstruction(trueBB, falseBB, _dst, bb));
     false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
 }
@@ -396,6 +423,9 @@ void Id::genBr()
     BasicBlock *trueBB = new BasicBlock(func);
     BasicBlock *falseBB = new BasicBlock(func);
     BasicBlock *mergeBB = new BasicBlock(func);
+    bool success = true;
+    int cond_val = getConstExpVal(&success);
+    if(success) _dst->setConstInit(cond_val);
     true_list.push_back(new CondBrInstruction(trueBB, falseBB, _dst, bb));
     false_list.push_back(new UncondBrInstruction(mergeBB, falseBB));
 }
@@ -940,8 +970,9 @@ void Id::output(int level)
     name = symbolEntry->toStr();
     type = symbolEntry->getType()->toStr();
     scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tpointer_entry: %p\n", 
-            level, ' ', name.c_str(), scope, type.c_str(), symbolEntry);
+    ExprNode *constInit = ((IdentifierSymbolEntry*) symbolEntry)->constInit;
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tinit: %d\tpointer_entry: %p\n", 
+            level, ' ', name.c_str(), scope, type.c_str(), constInit != nullptr, symbolEntry);
     if(arrayIndex && !arrayIndex->empty())
         arrayIndex->output(level + 4);
 }
@@ -970,7 +1001,13 @@ void DeclStmt::output(int level)
 
 void IfStmt::output(int level)
 {
-    fprintf(yyout, "%*cIfStmt\n", level, ' ');
+    fprintf(yyout, "%*cIfStmt\t", level, ' ');
+    bool success = true;
+    int cond_val = cond->getConstExpVal(&success);
+    if(success)
+        fprintf(yyout, "const_cond: %d", cond_val);
+
+    fprintf(yyout, "\n");
     cond->output(level + 4);
     thenStmt->output(level + 4);
 }

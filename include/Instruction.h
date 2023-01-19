@@ -16,6 +16,7 @@ public:
     bool isUncond() const {return instType == UNCOND;};
     bool isCond() const {return instType == COND;};
     unsigned getOpcode() const {return opcode;};
+    unsigned getInstType() const {return instType;};
     void setParent(BasicBlock *);
     void setNext(Instruction *);
     void setPrev(Instruction *);
@@ -24,7 +25,7 @@ public:
     virtual Operand* getDef(){return nullptr;};
     virtual std::vector<Operand *> getUse(){return std::vector<Operand *>();};
     virtual void output() const = 0;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT, GEP};
 protected:
     unsigned instType;
     unsigned opcode;
@@ -114,6 +115,8 @@ public:
     ~CondBrInstruction();
     std::vector<Operand *> getUse();
     void output() const;
+    bool isConstCond() {return operands[0]->constInit;}
+    int getConstCond() {return operands[0]->constValue;}
     void setTrueBranch(BasicBlock*);
     BasicBlock* getTrueBranch();
     void setFalseBranch(BasicBlock*);

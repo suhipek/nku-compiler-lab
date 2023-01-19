@@ -413,7 +413,8 @@ VarDef
         Type* type = nowType;
         for(auto it = indices.rbegin(); it != indices.rend(); it++)
         {
-            type = new ArrayType(type, (*it)->getConstExpVal());
+            bool success = true;
+            type = new ArrayType(type, (*it)->getConstExpVal(&success));
         }
         se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
         identifiers->install($1, se);

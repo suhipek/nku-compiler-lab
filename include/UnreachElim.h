@@ -6,12 +6,13 @@
 
 class UnreachElim {
     Unit* unit;
+    bool debug_on;
 
    public:
-    UnreachElim(Unit* unit) : unit(unit){};
+    UnreachElim(Unit* unit, bool debug = false) : unit(unit), debug_on(debug){};
     void pass();
-    void pass1(Function* function);
-    void pass2(Function* function);
+    void rmUnreachBB(Function* function);
+    void rmConstBr(Function* function);
     std::vector<int> getReachBlocks(Function* func, int idx);
 };
 

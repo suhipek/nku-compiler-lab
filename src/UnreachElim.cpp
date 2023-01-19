@@ -3,132 +3,105 @@
 #include <stack>
 using namespace std;
 
+extern Unit unit;
+
 void UnreachElim::pass() {
     
     for (auto it = unit->begin(); it != unit->end(); it++) 
     {
-        pass1(*it);
-        pass2(*it);
+        if(debug_on)
+            unit->output();
+        rmConstBr(*it);
+        if(debug_on)
+            unit->output();
+        rmUnreachBB(*it);
     }
 }
 
-void UnreachElim::pass1(Function* func) {
-    auto blocks = getReachBlocks(func, 0);
+void UnreachElim::rmUnreachBB(Function* func) {
+    auto reachedList = getReachBlocks(func, 0);
     auto& blockList = func->getBlockList();
     int len = blockList.size();
     bool again = false;
     int i;
-    for (i = 1; i < len; i++) {
-        if (find(blocks.begin(), blocks.end(), i) == blocks.end()) {
-            again = true;
+    for (i = 1; i < len; i++) 
+    {
+        if (find(reachedList.begin(), reachedList.end(), i) == reachedList.end()) 
+        {
+            again = true; // 有需要删除的块
             break;
         }
     }
-    if (again) {
+    if (again) 
+    {
         BasicBlock* block = blockList[i];
         for (auto iter = block->pred_begin(); iter != block->pred_end(); iter++)
             (*iter)->removeSucc(block);
         for (auto iter = block->succ_begin(); iter != block->succ_end(); iter++)
             (*iter)->removePred(block);
         blockList.erase(blockList.begin() + i);
-        pass1(func);
+        rmUnreachBB(func); // 递归直到没有需要删除的块
     }
 }
 
 vector<int> UnreachElim::getReachBlocks(Function* func, int idx) {
-    auto m = func->getBlockMap();
-    int len = m.size();
+    // 遍历流图，找出可达块
+    auto bMap = func->getBlockMap();
+    int len = bMap.size();
     vector<bool> visited(len, false);
     stack<int> stk;
     stk.push(idx);
-    int v;
-    while (!stk.empty()) {
-        v = stk.top();
+    int visiting;
+    while (!stk.empty()) 
+    {
+        visiting = stk.top();
         stk.pop();
-        if (!visited[v])
-            visited[v] = true;
+        if (!visited[visiting])
+            visited[visiting] = true;
         for (int i = 0; i < len; i++)
-            if (m[v][i] && !visited[i])
+        {
+            if (bMap[visiting][i] && !visited[i])
                 stk.push(i);
-    }
-    vector<int> ret;
-    for (int i = 0; i < len; i++)
-        if (visited[i] && i != idx)
-            ret.push_back(i);
-    return ret;
-}
-
-void UnreachElim::pass2(Function* func) {
-    // 删除由于常量传播等造成的常数条件if/while
-    map<Instruction*, bool> cmpIns;
-    for (auto block : func->getBlockList()) {
-        for (auto in = block->begin(); in != block->end(); in = in->getNext()) {
-            if (in->getOpcode() == Instruction::CMP) {
-                auto uses = in->getUse();
-                if (uses[0]->isConst() && uses[1]->isConst()) {
-                    auto val1 = uses[0]->getConstVal();
-                    auto val2 = uses[1]->getConstVal();
-                    bool result;
-                    switch (in->getOpcode()) {
-                        case CmpInstruction::E:
-                            result = val1 == val2;
-                            break;
-                        case CmpInstruction::NE:
-                            result = val1 != val2;
-                            break;
-                        case CmpInstruction::L:
-                            result = val1 < val2;
-                            break;
-                        case CmpInstruction::LE:
-                            result = val1 <= val2;
-                            break;
-                        case CmpInstruction::G:
-                            result = val1 > val2;
-                            break;
-                        case CmpInstruction::GE:
-                            result = val1 >= val2;
-                            break;
-                    }
-                    cmpIns[in] = result;
-                }
-            }
         }
     }
-    for (auto it : cmpIns) {
-        auto in = it.first;
-        auto parent = in->getParent();
-        auto def = in->getDef();
-        // 应该只有一个use吧
-        // assert(def->usersNum() == 1);
-        // auto useIn = *(def->use_begin());
-        // 还需要xor的先不管了  性能里面应该不多
-        bool flag = false;
-        for (auto it = def->use_begin(); it != def->use_end(); it++)
-            if (!(*it)->isCond()) {
-                flag = true;
-                break;
+    vector<int> reached;
+    for (int i = 0; i < len; i++)
+        if (visited[i] && i != idx)
+            reached.push_back(i);
+    return reached;
+}
+
+void UnreachElim::rmConstBr(Function* func)
+{
+    // 删除无效while和if语句
+    for(auto now_bb: func->getBlockList())
+    {
+        for(auto inst = now_bb->begin(); inst != now_bb->end(); inst = inst->getNext())
+        {
+            // 遍历指令，如果指令类型为CondBr，且条件为常数，则删除该指令
+            if(inst->getInstType() == Instruction::COND)
+            {
+                
+                BasicBlock *to_bb, *other_bb;
+                auto brInst = (CondBrInstruction*)inst;
+                if(!brInst->isConstCond())
+                    continue;
+                int val = brInst->getConstCond();
+                if(val)
+                {
+                    to_bb = brInst->getTrueBranch();
+                    other_bb = brInst->getFalseBranch();
+                }
+                else
+                {
+                    to_bb = brInst->getFalseBranch();
+                    other_bb = brInst->getTrueBranch();
+                }
+                new UncondBrInstruction(to_bb, now_bb);
+                now_bb->removeSucc(other_bb);
+                other_bb->removePred(now_bb);
+                now_bb->remove(inst);
             }
-        if (!flag)
-            parent->remove(in);
-        for (auto it1 = def->use_begin(); it1 != def->use_end(); it1++) {
-            if (!(*it1)->isCond())
-                continue;
-            auto branch = (CondBrInstruction*)(*it1);
-            parent = branch->getParent();
-            if (parent->rbegin() != branch)
-                continue;
-            BasicBlock *dstBlock, *otherBlock;
-            if (it.second) {
-                dstBlock = branch->getTrueBranch();
-                otherBlock = branch->getFalseBranch();
-            } else {
-                dstBlock = branch->getFalseBranch();
-                otherBlock = branch->getTrueBranch();
-            }
-            new UncondBrInstruction(dstBlock, parent);
-            parent->removeSucc(otherBlock);
-            otherBlock->removePred(parent);
-            parent->remove(branch);
         }
     }
 }

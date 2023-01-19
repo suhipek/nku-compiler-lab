@@ -18,6 +18,7 @@ public:
     bool isVoid() const {return kind == VOID;};
     bool isFunc() const {return kind == FUNC;};
     bool isConst() const {return isConstType;};
+    int getKind() const {return kind;};
 };
 
 class IntType : public Type

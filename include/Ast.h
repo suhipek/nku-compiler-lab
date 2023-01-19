@@ -51,7 +51,7 @@ public:
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
     virtual void genBr() = 0;
-    virtual int getConstExpVal() = 0;
+    virtual int getConstExpVal(bool *success) {*success = false; return 0;}
 };
 
 class BinaryExpr : public ExprNode
@@ -66,7 +66,7 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
-    int getConstExpVal();
+    int getConstExpVal(bool *success);
 };
 
 class UnaryExpr : public ExprNode
@@ -81,7 +81,7 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
-    int getConstExpVal();
+    int getConstExpVal(bool *success);
 };
 
 class ConvExpr : public ExprNode
@@ -95,8 +95,6 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr(){}
-    int getConstExpVal()
-        {fprintf(stderr, "Error: getConstExpVal() is called on a constant"); return -1;}
 };
 
 class Constant : public ExprNode
@@ -111,7 +109,7 @@ public:
         fprintf(stderr, "Error: genBr() is called on a constant");
         this->genCode();
     }
-    int getConstExpVal();
+    int getConstExpVal(bool *success);
 };
 
 class CallParams;
@@ -138,7 +136,7 @@ public:
     void genCode(bool left);
     void genBr();
     bool isArray() {return arrayIndex != nullptr;};
-    int getConstExpVal();
+    int getConstExpVal(bool *success);
 };
 
 class StmtNode : public Node
@@ -319,8 +317,6 @@ public:
     Type* typeCheck(Type* retType=nullptr);
     void genCode();
     void genBr();
-    int getConstExpVal()
-        {fprintf(stderr, "Error: getConstExpVal() is called on a callexpr"); return -1;}
 };
 
 class Ast

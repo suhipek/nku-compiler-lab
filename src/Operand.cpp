@@ -2,6 +2,7 @@
 #include <sstream>
 #include <algorithm>
 #include <string.h>
+#include <Ast.h>
 
 std::string Operand::toStr() const
 {
@@ -15,3 +16,13 @@ void Operand::removeUse(Instruction *inst)
         uses.erase(i);
 }
 
+int Operand::getConstValue(bool *success)
+{
+    
+    if(se->isConstant())
+        return ((ConstantSymbolEntry*)se)->getValue();
+    else if(se->isVariable())
+        return ((IdentifierSymbolEntry*)se)->constInit->getConstExpVal(success);
+    *success = false;
+    return 0;
+}
