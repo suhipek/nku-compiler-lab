@@ -25,6 +25,7 @@ public:
     void setDef(Instruction *inst) {def = inst;};
     void addUse(Instruction *inst) { uses.push_back(inst);};
     void removeUse(Instruction *inst);
+    void removeDef(Instruction* inst);
     int usersNum() const {return uses.size();};
 
     use_iterator use_begin() {return uses.begin();};

@@ -16,13 +16,7 @@ void Operand::removeUse(Instruction *inst)
         uses.erase(i);
 }
 
-int Operand::getConstValue(bool *success)
+void Operand::removeDef(Instruction* inst)
 {
-    
-    if(se->isConstant())
-        return ((ConstantSymbolEntry*)se)->getValue();
-    else if(se->isVariable())
-        return ((IdentifierSymbolEntry*)se)->constInit->getConstExpVal(success);
-    *success = false;
-    return 0;
+    def = nullptr;
 }

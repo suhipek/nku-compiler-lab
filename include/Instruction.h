@@ -24,8 +24,10 @@ public:
     Instruction *getPrev();
     virtual Operand* getDef(){return nullptr;};
     virtual std::vector<Operand *> getUse(){return std::vector<Operand *>();};
+    virtual void replaceUse(Operand* old, Operand* income) {}
+    virtual void replaceDef(Operand* income) {}
     virtual void output() const = 0;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT, GEP};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL, SEXT, GEP, PHI};
 protected:
     unsigned instType;
     unsigned opcode;
@@ -49,6 +51,7 @@ public:
     AllocaInstruction(Operand *dst, SymbolEntry *se, BasicBlock *insert_bb = nullptr);
     ~AllocaInstruction();
     Operand* getDef();
+    void replaceDef(Operand* income);
     void output() const;
 private:
     SymbolEntry *se;
@@ -61,6 +64,8 @@ public:
     ~LoadInstruction();
     std::vector<Operand *> getUse();
     Operand* getDef();
+    void replaceUse(Operand* old, Operand* income);
+    void replaceDef(Operand* income);
     void output() const;
 };
 
@@ -70,6 +75,7 @@ public:
     StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *insert_bb = nullptr);
     ~StoreInstruction();
     std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
     void output() const;
 };
 
@@ -80,6 +86,8 @@ public:
     ~BinaryInstruction();
     std::vector<Operand *> getUse();
     Operand* getDef();
+    void replaceUse(Operand* old, Operand* income);
+    void replaceDef(Operand* income);
     void output() const;
     enum {SUB, ADD, MUL, DIV, MOD, AND, OR, USUB};
 };
@@ -91,6 +99,8 @@ public:
     ~CmpInstruction();
     std::vector<Operand *> getUse();
     Operand* getDef();
+    void replaceUse(Operand* old, Operand* income);
+    void replaceDef(Operand* income);
     void output() const;
     enum {E, NE, L, GE, G, LE};
 };
@@ -114,6 +124,7 @@ public:
     CondBrInstruction(BasicBlock*, BasicBlock*, Operand *, BasicBlock *insert_bb = nullptr);
     ~CondBrInstruction();
     std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
     void output() const;
     bool isConstCond() {return operands[0]->constInit;}
     int getConstCond() {return operands[0]->constValue;}
@@ -132,6 +143,7 @@ public:
     RetInstruction(Operand *src, BasicBlock *insert_bb = nullptr);
     ~RetInstruction();
     std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
     void output() const;
 };
 
@@ -141,6 +153,7 @@ public:
     CallInstruction(Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb = nullptr);
     ~CallInstruction();
     std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
     void output() const;
 private:
     SymbolEntry *se;
@@ -153,6 +166,7 @@ public:
     SextInstruction(Operand *dst, Operand *src, Type *toType, BasicBlock *insert_bb = nullptr);
     ~SextInstruction();
     std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
     void output() const;
 private:
     Type *toType;
@@ -166,6 +180,26 @@ public:
     void output() const;
 private:
     std::vector<Operand*> args;
+};
+
+class PhiInstruction : public Instruction
+{
+public:
+    PhiInstruction(Operand *dst, BasicBlock *insert_bb = nullptr);
+    ~PhiInstruction();
+    void addSrc(BasicBlock* block, Operand* src);
+    Operand* getOriginDef() { return originDef; }
+    // std::vector<Operand *> getUse();
+    void replaceUse(Operand* old, Operand* income);
+    // Operand* getDef();
+    // void replaceDef(Operand* income);
+
+    void output() const;
+
+private:
+    Operand* originDef;
+    Operand* dst;
+    std::map<BasicBlock*, Operand*> srcs;
 };
 
 #endif

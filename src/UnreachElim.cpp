@@ -12,8 +12,6 @@ void UnreachElim::pass() {
         if(debug_on)
             unit->output();
         rmConstBr(*it);
-        if(debug_on)
-            unit->output();
         rmUnreachBB(*it);
     }
 }

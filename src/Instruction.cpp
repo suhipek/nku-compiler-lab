@@ -3,7 +3,7 @@
 #include <iostream>
 #include "Function.h"
 #include "Type.h"
-extern FILE* yyout;
+extern FILE *yyout;
 
 Instruction::Instruction(unsigned instType, BasicBlock *insert_bb)
 {
@@ -66,7 +66,7 @@ BinaryInstruction::BinaryInstruction(unsigned opcode, Operand *dst, Operand *src
 BinaryInstruction::~BinaryInstruction()
 {
     operands[0]->setDef(nullptr);
-    if(operands[0]->usersNum() == 0)
+    if (operands[0]->usersNum() == 0)
         delete operands[0];
     operands[1]->removeUse(this);
     operands[2]->removeUse(this);
@@ -80,9 +80,32 @@ std::vector<Operand *> BinaryInstruction::getUse()
     return ret;
 }
 
-Operand* BinaryInstruction::getDef()
+Operand *BinaryInstruction::getDef()
 {
     return operands[0];
+}
+
+void BinaryInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[1])
+    {
+        operands[1]->removeUse(this);
+        operands[1] = income;
+        operands[1]->addUse(this);
+    }
+    else if (old == operands[2])
+    {
+        operands[2]->removeUse(this);
+        operands[2] = income;
+        operands[2]->addUse(this);
+    }
+}
+
+void BinaryInstruction::replaceDef(Operand *income)
+{
+    operands[0]->removeDef(this);
+    operands[0] = income;
+    operands[0]->setDef(this);
 }
 
 void BinaryInstruction::output() const
@@ -118,7 +141,8 @@ void BinaryInstruction::output() const
     fprintf(yyout, "  %s = %s %s %s, %s\n", s1.c_str(), op.c_str(), type.c_str(), s2.c_str(), s3.c_str());
 }
 
-CmpInstruction::CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb): Instruction(CMP, insert_bb){
+CmpInstruction::CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb) : Instruction(CMP, insert_bb)
+{
     this->opcode = opcode;
     operands.push_back(dst);
     operands.push_back(src1);
@@ -131,7 +155,7 @@ CmpInstruction::CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Ope
 CmpInstruction::~CmpInstruction()
 {
     operands[0]->setDef(nullptr);
-    if(operands[0]->usersNum() == 0)
+    if (operands[0]->usersNum() == 0)
         delete operands[0];
     operands[1]->removeUse(this);
     operands[2]->removeUse(this);
@@ -145,9 +169,32 @@ std::vector<Operand *> CmpInstruction::getUse()
     return ret;
 }
 
-Operand* CmpInstruction::getDef()
+Operand *CmpInstruction::getDef()
 {
     return operands[0];
+}
+
+void CmpInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[1])
+    {
+        operands[1]->removeUse(this);
+        operands[1] = income;
+        operands[1]->addUse(this);
+    }
+    else if (old == operands[2])
+    {
+        operands[2]->removeUse(this);
+        operands[2] = income;
+        operands[2]->addUse(this);
+    }
+}
+
+void CmpInstruction::replaceDef(Operand *income)
+{
+    operands[0]->removeDef(this);
+    operands[0] = income;
+    operands[0]->setDef(this);
 }
 
 void CmpInstruction::output() const
@@ -205,7 +252,8 @@ BasicBlock *UncondBrInstruction::getBranch()
     return branch;
 }
 
-CondBrInstruction::CondBrInstruction(BasicBlock*true_branch, BasicBlock*false_branch, Operand *cond, BasicBlock *insert_bb) : Instruction(COND, insert_bb){
+CondBrInstruction::CondBrInstruction(BasicBlock *true_branch, BasicBlock *false_branch, Operand *cond, BasicBlock *insert_bb) : Instruction(COND, insert_bb)
+{
     this->true_branch = true_branch;
     this->false_branch = false_branch;
     cond->addUse(this);
@@ -222,6 +270,16 @@ std::vector<Operand *> CondBrInstruction::getUse()
     std::vector<Operand *> ret;
     ret.push_back(operands[0]);
     return ret;
+}
+
+void CondBrInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[0])
+    {
+        operands[0]->removeUse(this);
+        operands[0] = income;
+        operands[0]->addUse(this);
+    }
 }
 
 void CondBrInstruction::output() const
@@ -259,7 +317,7 @@ BasicBlock *CondBrInstruction::getTrueBranch()
 
 RetInstruction::RetInstruction(Operand *src, BasicBlock *insert_bb) : Instruction(RET, insert_bb)
 {
-    if(src != nullptr)
+    if (src != nullptr)
     {
         operands.push_back(src);
         src->addUse(this);
@@ -268,21 +326,31 @@ RetInstruction::RetInstruction(Operand *src, BasicBlock *insert_bb) : Instructio
 
 RetInstruction::~RetInstruction()
 {
-    if(!operands.empty())
+    if (!operands.empty())
         operands[0]->removeUse(this);
 }
 
 std::vector<Operand *> RetInstruction::getUse()
 {
     std::vector<Operand *> ret;
-    if(!operands.empty())
+    if (!operands.empty())
         ret.push_back(operands[0]);
     return ret;
 }
 
+void RetInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (!operands.empty() && old == operands[0])
+    {
+        operands[0]->removeUse(this);
+        operands[0] = income;
+        operands[0]->addUse(this);
+    }
+}
+
 void RetInstruction::output() const
 {
-    if(operands.empty())
+    if (operands.empty())
     {
         fprintf(yyout, "  ret void\n");
     }
@@ -305,13 +373,20 @@ AllocaInstruction::AllocaInstruction(Operand *dst, SymbolEntry *se, BasicBlock *
 AllocaInstruction::~AllocaInstruction()
 {
     operands[0]->setDef(nullptr);
-    if(operands[0]->usersNum() == 0)
+    if (operands[0]->usersNum() == 0)
         delete operands[0];
 }
 
-Operand* AllocaInstruction::getDef()
+Operand *AllocaInstruction::getDef()
 {
     return operands[0];
+}
+
+void AllocaInstruction::replaceDef(Operand *income)
+{
+    operands[0]->removeDef(this);
+    operands[0] = income;
+    operands[0]->setDef(this);
 }
 
 void AllocaInstruction::output() const
@@ -333,7 +408,7 @@ LoadInstruction::LoadInstruction(Operand *dst, Operand *src_addr, BasicBlock *in
 LoadInstruction::~LoadInstruction()
 {
     operands[0]->setDef(nullptr);
-    if(operands[0]->usersNum() == 0)
+    if (operands[0]->usersNum() == 0)
         delete operands[0];
     operands[1]->removeUse(this);
 }
@@ -345,9 +420,26 @@ std::vector<Operand *> LoadInstruction::getUse()
     return use;
 }
 
-Operand* LoadInstruction::getDef()
+Operand *LoadInstruction::getDef()
 {
     return operands[0];
+}
+
+void LoadInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[1])
+    {
+        operands[1]->removeUse(this);
+        operands[1] = income;
+        operands[1]->addUse(this);
+    }
+}
+
+void LoadInstruction::replaceDef(Operand *income)
+{
+    operands[0]->removeDef(this);
+    operands[0] = income;
+    operands[0]->setDef(this);
 }
 
 void LoadInstruction::output() const
@@ -383,6 +475,22 @@ std::vector<Operand *> StoreInstruction::getUse()
     return use;
 }
 
+void StoreInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[0])
+    {
+        operands[0]->removeUse(this);
+        operands[0] = income;
+        operands[0]->addUse(this);
+    }
+    else if (old == operands[1])
+    {
+        operands[1]->removeUse(this);
+        operands[1] = income;
+        operands[1]->addUse(this);
+    }
+}
+
 void StoreInstruction::output() const
 {
     std::string dst = operands[0]->toStr();
@@ -390,19 +498,18 @@ void StoreInstruction::output() const
     std::string dst_type = operands[0]->getType()->toStr();
     std::string src_type = operands[1]->getType()->toStr();
 
-    fprintf(yyout, "  store %s %s, %s* %s, align 4\n", 
-        src_type.c_str(), src.c_str(), src_type.c_str(), dst.c_str());
+    fprintf(yyout, "  store %s %s, %s* %s, align 4\n",
+            src_type.c_str(), src.c_str(), src_type.c_str(), dst.c_str());
 }
 
-
 CallInstruction::CallInstruction(
-    Operand *dst, SymbolEntry *se, std::vector<Operand*> &args, BasicBlock *insert_bb) : Instruction(CALL, insert_bb)
+    Operand *dst, SymbolEntry *se, std::vector<Operand *> &args, BasicBlock *insert_bb) : Instruction(CALL, insert_bb)
 {
     // todo: how to pass args and se as operands
     operands.push_back(dst);
     dst->addUse(this);
     this->se = se;
-    for(auto it = args.begin(); it != args.end(); ++it)
+    for (auto it = args.begin(); it != args.end(); ++it)
     {
         operands.push_back(*it);
         (*it)->addUse(this);
@@ -411,16 +518,29 @@ CallInstruction::CallInstruction(
 
 CallInstruction::~CallInstruction()
 {
-    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+    for (auto it = operands.begin() + 1; it != operands.end(); ++it)
         (*it)->removeUse(this);
 }
 
 std::vector<Operand *> CallInstruction::getUse()
 {
     std::vector<Operand *> use;
-    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+    for (auto it = operands.begin() + 1; it != operands.end(); ++it)
         use.push_back(*it);
     return use;
+}
+
+void CallInstruction::replaceUse(Operand *old, Operand *income)
+{
+    for (auto it = operands.begin() + 1; it != operands.end(); ++it)
+    {
+        if (*it == old)
+        {
+            (*it)->removeUse(this);
+            *it = income;
+            (*it)->addUse(this);
+        }
+    }
 }
 
 void CallInstruction::output() const
@@ -432,25 +552,25 @@ void CallInstruction::output() const
     // Type *retType = ((FunctionType *)(se->getType()))->getRetType();
 
     // 遍历转换参数列表
-    for(auto it = operands.begin() + 1; it != operands.end(); ++it)
+    for (auto it = operands.begin() + 1; it != operands.end(); ++it)
     {
         std::string arg = (*it)->toStr();
         std::string arg_type = (*it)->getType()->toStr();
         func_params += arg_type + " " + arg;
-        if(it != operands.end() - 1)
+        if (it != operands.end() - 1)
             func_params += ", ";
     }
 
-    Type* retType = ((FunctionType *)(se->getType()))->getRetType();
-    if(retType == TypeSystem::voidType)
+    Type *retType = ((FunctionType *)(se->getType()))->getRetType();
+    if (retType == TypeSystem::voidType)
     {
-        fprintf(yyout, "  call %s %s(%s)\n", 
-            func_type.c_str(), func_name.c_str(), func_params.c_str());
+        fprintf(yyout, "  call %s %s(%s)\n",
+                func_type.c_str(), func_name.c_str(), func_params.c_str());
     }
     else
     {
-        fprintf(yyout, "  %s = call %s %s(%s)\n", 
-            dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
+        fprintf(yyout, "  %s = call %s %s(%s)\n",
+                dst.c_str(), func_type.c_str(), func_name.c_str(), func_params.c_str());
     }
 }
 
@@ -478,6 +598,22 @@ std::vector<Operand *> SextInstruction::getUse()
     return use;
 }
 
+void SextInstruction::replaceUse(Operand *old, Operand *income)
+{
+    if (old == operands[0])
+    {
+        operands[0]->removeUse(this);
+        operands[0] = income;
+        operands[0]->addUse(this);
+    }
+    else if (old == operands[1])
+    {
+        operands[1]->removeUse(this);
+        operands[1] = income;
+        operands[1]->addUse(this);
+    }
+}
+
 void SextInstruction::output() const
 {
     std::string dst = operands[0]->toStr();
@@ -485,18 +621,18 @@ void SextInstruction::output() const
     std::string dst_type = toType->toStr();
     std::string src_type = operands[1]->getType()->toStr();
 
-    fprintf(yyout, "  %s = sext %s %s to %s\n", 
-        dst.c_str(), src_type.c_str(), src.c_str(), dst_type.c_str());
+    fprintf(yyout, "  %s = sext %s %s to %s\n",
+            dst.c_str(), src_type.c_str(), src.c_str(), dst_type.c_str());
 }
 
-GepInstruction::GepInstruction(Operand *dst, Operand *src, std::vector<Operand*> &args, BasicBlock *insert_bb)
+GepInstruction::GepInstruction(Operand *dst, Operand *src, std::vector<Operand *> &args, BasicBlock *insert_bb)
     : Instruction(GEP, insert_bb)
 {
     operands.push_back(dst);
     operands.push_back(src);
     dst->addUse(this);
     src->addUse(this);
-    for(auto it = args.begin(); it != args.end(); ++it)
+    for (auto it = args.begin(); it != args.end(); ++it)
     {
         operands.push_back(*it);
         (*it)->addUse(this);
@@ -507,7 +643,7 @@ GepInstruction::~GepInstruction()
 {
     operands[0]->removeUse(this);
     operands[1]->removeUse(this);
-    for(auto it = operands.begin() + 2; it != operands.end(); ++it)
+    for (auto it = operands.begin() + 2; it != operands.end(); ++it)
         (*it)->removeUse(this);
 }
 
@@ -519,16 +655,77 @@ void GepInstruction::output() const
     std::string arr_type = operands[1]->getType()->toStr();
     std::string ele_type = ((PointerType *)(operands[1]->getType()))->getValueType()->toStr();
     std::string gep_params;
-    for(auto it = operands.begin() + 2; it != operands.end(); ++it)
+    for (auto it = operands.begin() + 2; it != operands.end(); ++it)
     {
         std::string arg = (*it)->toStr();
         std::string arg_type = (*it)->getType()->toStr();
         gep_params += arg_type + " " + arg;
-        if(it != operands.end() - 1)
+        if (it != operands.end() - 1)
             gep_params += ", ";
     }
 
     // %ptr = getelementptr i32, i32* %arr, i32 2, i32 3
-    fprintf(yyout, "  %s = getelementptr inbounds %s, %s %s, i32 0, %s\n", 
-        dst.c_str(), ele_type.c_str(), arr_type.c_str(), arr.c_str(), gep_params.c_str());
+    fprintf(yyout, "  %s = getelementptr inbounds %s, %s %s, i32 0, %s\n",
+            dst.c_str(), ele_type.c_str(), arr_type.c_str(), arr.c_str(), gep_params.c_str());
+}
+
+PhiInstruction::PhiInstruction(Operand *_dst, BasicBlock *insert_bb)
+    : Instruction(PHI, insert_bb)
+{
+    operands.push_back(_dst);
+    this->dst = _dst;
+    this->originDef = _dst;
+    dst->setDef(this);
+}
+
+PhiInstruction::~PhiInstruction()
+{
+    dst->setDef(nullptr);
+    if (dst->usersNum() == 0)
+        delete dst;
+    for (auto it : srcs)
+        it.second->removeUse(this);
+}
+
+void PhiInstruction::output() const
+{
+    fprintf(yyout, "  %s = phi %s", dst->toStr().c_str(),
+            dst->getType()->toStr().c_str());
+    bool first = true;
+    for (auto it = srcs.begin(); it != srcs.end(); it++)
+    {
+        if (!first)
+            fprintf(yyout, ", ");
+        else
+            first = false;
+        fprintf(yyout, "[ %s , %%B%d ]", it->second->toStr().c_str(),
+                it->first->getNo());
+    }
+    fprintf(yyout, "\n");
+}
+
+void PhiInstruction::addSrc(BasicBlock* block, Operand* src) {
+    operands.push_back(src);
+    if(srcs.find(block) == srcs.end())
+        srcs[block] = src;
+    src->addUse(this);
+}
+
+void PhiInstruction::replaceUse(Operand* old, Operand* income)
+{
+    for(auto it = operands.begin(); it != operands.end(); it++)
+    {
+        if(*it == old)
+        {
+            old->removeUse(this);
+            *it = income;
+            for(auto it = srcs.begin(); it != srcs.end(); it++)
+            {
+                if((*it).second == old)
+                    (*it).second = income;
+            }
+            income->addUse(this);
+        }
+    }
+    return;
 }

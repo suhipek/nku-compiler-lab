@@ -4,6 +4,7 @@
 #include "Ast.h"
 #include "Unit.h"
 #include "UnreachElim.h"
+#include "Mem2reg.h"
 using namespace std;
 
 Ast ast;
@@ -71,8 +72,10 @@ int main(int argc, char *argv[])
     if(dump_ast)
         ast.output();
     ast.genCode(&unit);
-    UnreachElim ue(&unit, true);
+    UnreachElim ue(&unit);
     ue.pass();
+    Mem2reg m2r(&unit);
+    m2r.pass();
     if(dump_ir)
         unit.output();
     return 0;

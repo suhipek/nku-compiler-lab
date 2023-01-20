@@ -17,6 +17,8 @@ private:
     int no;
 
 public:
+    int order;
+    std::set<BasicBlock*> domFrontier;
     BasicBlock(Function *);
     ~BasicBlock();
     void insertFront(Instruction *);
