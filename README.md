@@ -1,3 +1,15 @@
+**DISCLAIMER**: 本人不为您调试本人代码过程中造成的心脏病、高血压负责。（本项目的线性扫描、后端的部分代码有heisenbug和非常 \* 山的代码）
+
+建议您结合参考：
+
+- 时学长参赛的代码、同时也是编译课作业框架的来源：https://github.com/shm0214/2022_compile
+
+- LYX佬：https://github.com/NKULYX/NKU-COSC0017-Principles-of-Compiler-System-sysY_compiler
+
+- 梅神，伟大无须多言：https://github.com/juniMay/syc （C++17写就，为23年比赛用的新框架）
+
+- https://chat.openai.com
+
 # 2022Fall NKUCS Course - Principle of Compilers
 
 > Lab7: Machine Code Generation
